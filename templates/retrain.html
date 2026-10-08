@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Retrain Models | Academic Performance Analytics</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header p {
+            margin-top: 6px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: white;
+            padding: 14px 35px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #374151;
+            margin-right: 22px;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: #2563eb;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            margin-bottom: 12px;
+        }
+
+        .description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .warning {
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 16px;
+            margin-top: 20px;
+            line-height: 1.6;
+            color: #9a3412;
+        }
+
+        .info {
+            background: #eff6ff;
+            border-left: 5px solid #2563eb;
+            padding: 16px;
+            margin-top: 20px;
+            line-height: 1.6;
+            color: #1e40af;
+        }
+
+        .checks {
+            margin-top: 22px;
+        }
+
+        .check {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        .check strong {
+            margin-left: 8px;
+        }
+
+        .button-area {
+            text-align: center;
+            margin-top: 28px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 13px 30px;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #64748b;
+        }
+
+        #message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 5px solid #22c55e;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 5px solid #ef4444;
+        }
+
+        .progress {
+            display: none;
+            margin-top: 22px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.4s ease;
+        }
+
+        .result-grid {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .result-box h3 {
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-value {
+            font-weight: bold;
+        }
+
+        @media (max-width: 800px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                line-height: 2;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🤖 Academic Performance Analytics</h1>
+    <p>Model Retraining Center</p>
+</header>
+
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/students">Student Records</a>
+    <a href="/add-student">Add Student</a>
+    <a href="/model-lab">Model Lab</a>
+    <a href="/predict">Predict Student</a>
+    <a href="/what-if">What-If Analysis</a>
+    <a href="/retrain">Retrain Models</a>
+</nav>
+
+<div class="container">
+
+    <div class="card">
+
+        <h2>🔄 Retrain Machine-Learning Models</h2>
+
+        <p class="description">
+            Retraining rebuilds the machine-learning models using the
+            latest student data available in
+            <strong>Student_performance_data.csv</strong>.
+        </p>
+
+        <div class="info">
+            <strong>What happens during retraining?</strong>
+            <br><br>
+
+            1. The latest CSV dataset is loaded.<br>
+            2. Required columns are validated.<br>
+            3. StudentID is excluded from model features.<br>
+            4. Actual GPA is excluded from GradeClass prediction.<br>
+            5. Multiple classification models are trained.<br>
+            6. Multiple GPA regression models are trained.<br>
+            7. Cross-validation is performed.<br>
+            8. Models are compared using evaluation metrics.<br>
+            9. The best-performing models are saved.
+        </div>
+
+        <div class="warning">
+            ⚠️ <strong>Important:</strong>
+            Retraining uses the current contents of the CSV file.
+            If you have recently added students, retraining allows the
+            new records to become part of the training dataset.
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>✅ Pre-Training Validation</h2>
+
+        <div class="checks">
+
+            <div class="check">
+                🆔
+                <strong>StudentID is identifier-only</strong>
+            </div>
+
+            <div class="check">
+                🚫
+                <strong>GPA is excluded from GradeClass features</strong>
+            </div>
+
+            <div class="check">
+                📊
+                <strong>12 behavioral/demographic features are used</strong>
+            </div>
+
+            <div class="check">
+                🔀
+                <strong>Cross-validation is used for model comparison</strong>
+            </div>
+
+            <div class="check">
+                🌲
+                <strong>Multiple machine-learning algorithms are compared</strong>
+            </div>
+
+        </div>
+
+        <div class="button-area">
+
+            <button
+                id="retrainButton"
+                onclick="startRetraining()">
+                🚀 Start Model Retraining
+            </button>
+
+        </div>
+
+        <div id="loading">
+
+            <p>
+                ⏳ Training models...
+                This may take some time.
+            </p>
+
+            <div class="progress">
+
+                <div class="progress-bar">
+
+                    <div
+                        class="progress-fill"
+                        id="progressFill">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="message"></div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h2>📈 Retraining Result</h2>
+
+        <div class="result-grid" id="resultGrid">
+
+            <div class="result-box">
+
+                <h3>🎯 Classification Model</h3>
+
+                <div class="metric">
+                    <span>Best Model</span>
+                    <span
+                        class="metric-value"
+                        id="bestClassifier">
+                        -
+                    </span>
+                </div>
+
+                <div class="metric">
+                    <span>CV Accuracy</span>
+                    <span
+                        class="metric-value"
+                        id="classifierAccuracy">
+                        -
+                    </span>
+                </div>
+
+                <div class="metric">
+                    <span>CV Macro F1</span>
+                    <span
+                        class="metric-value"
+                        id="classifierF1">
+                        -
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="result-box">
+
+                <h3>📊 GPA Regression Model</h3>
+
+                <div class="metric">
+                    <span>Best Model</span>
+                    <span
+                        class="metric-value"
+                        id="bestRegressor">
+                        -
+                    </span>
+                </div>
+
+                <div class="metric">
+                    <span>CV RMSE</span>
+                    <span
+                        class="metric-value"
+                        id="regressorRMSE">
+                        -
+                    </span>
+                </div>
+
+                <div class="metric">
+                    <span>CV R²</span>
+                    <span
+                        class="metric-value"
+                        id="regressorR2">
+                        -
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+function showMessage(message, type) {
+
+    const messageBox =
+        document.getElementById("message");
+
+    messageBox.textContent = message;
+
+    messageBox.className = type;
+
+    messageBox.style.display = "block";
+}
+
+
+function startRetraining() {
+
+    const button =
+        document.getElementById("retrainButton");
+
+    const loading =
+        document.getElementById("loading");
+
+    const progress =
+        document.getElementById("progressFill");
+
+    const resultGrid =
+        document.getElementById("resultGrid");
+
+
+    button.disabled = true;
+
+    loading.style.display = "block";
+
+    resultGrid.style.display = "none";
+
+    document.getElementById("message")
+        .style.display = "none";
+
+
+    progress.style.width = "10%";
+
+
+    let progressValue = 10;
+
+    const progressTimer = setInterval(() => {
+
+        if (progressValue < 85) {
+
+            progressValue += 5;
+
+            progress.style.width =
+                progressValue + "%";
+
+        }
+
+    }, 500);
+
+
+    fetch("/api/retrain", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        }
+
+    })
+
+    .then(async response => {
+
+        const data =
+            await response.json();
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.error ||
+                "Model retraining failed."
+            );
+
+        }
+
+        return data;
+
+    })
+
+    .then(data => {
+
+        clearInterval(progressTimer);
+
+        progress.style.width = "100%";
+
+        loading.style.display = "none";
+
+        button.disabled = false;
+
+
+        const result =
+            data.result;
+
+
+        document.getElementById(
+            "bestClassifier"
+        ).textContent =
+            result.best_classifier || "-";
+
+
+        document.getElementById(
+            "classifierAccuracy"
+        ).textContent =
+            result.classification_accuracy !== undefined
+                ? Number(
+                    result.classification_accuracy
+                  ).toFixed(4)
+                : "-";
+
+
+        document.getElementById(
+            "classifierF1"
+        ).textContent =
+            result.classification_macro_f1 !== undefined
+                ? Number(
+                    result.classification_macro_f1
+                  ).toFixed(4)
+                : "-";
+
+
+        document.getElementById(
+            "bestRegressor"
+        ).textContent =
+            result.best_regressor || "-";
+
+
+        document.getElementById(
+            "regressorRMSE"
+        ).textContent =
+            result.regression_rmse !== undefined
+                ? Number(
+                    result.regression_rmse
+                  ).toFixed(4)
+                : "-";
+
+
+        document.getElementById(
+            "regressorR2"
+        ).textContent =
+            result.regression_r2 !== undefined
+                ? Number(
+                    result.regression_r2
+                  ).toFixed(4)
+                : "-";
+
+
+        resultGrid.style.display = "grid";
+
+
+        showMessage(
+            "✅ Models were successfully retrained and saved.",
+            "success"
+        );
+
+    })
+
+    .catch(error => {
+
+        clearInterval(progressTimer);
+
+        loading.style.display = "none";
+
+        button.disabled = false;
+
+        progress.style.width = "0%";
+
+        showMessage(
+            "❌ " + error.message,
+            "error"
+        );
+
+    });
+
+}
+
+</script>
+
+</body>
+</html>

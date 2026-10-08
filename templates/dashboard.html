@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Academic Performance Analytics</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        :root {
+            --bg: #f5f7fb;
+            --sidebar: #111827;
+            --sidebar-hover: #1f2937;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #6366f1;
+            --primary-light: #eef2ff;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ================================
+           LAYOUT
+        ================================= */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================================
+           SIDEBAR
+        ================================= */
+
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar);
+            color: white;
+            padding: 22px 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 5px 12px 28px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+        }
+
+        .brand-text h2 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .brand-text span {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .menu-title {
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1.2px;
+            padding: 12px;
+            text-transform: uppercase;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 13px;
+            margin: 4px 0;
+            border-radius: 10px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(
+                90deg,
+                rgba(99, 102, 241, 0.25),
+                rgba(99, 102, 241, 0.08)
+            );
+            color: white;
+            border-left: 3px solid #818cf8;
+        }
+
+        .nav-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .sidebar-bottom {
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            bottom: 20px;
+        }
+
+        .model-status {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .model-status-title {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .online {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        /* ================================
+           MAIN
+        ================================= */
+
+        .main {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 28px 32px;
+        }
+
+        /* ================================
+           TOP BAR
+        ================================= */
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .page-heading h1 {
+            font-size: 26px;
+            font-weight: 750;
+            letter-spacing: -0.5px;
+        }
+
+        .page-heading p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            border: 1px solid var(--border);
+            background: white;
+            padding: 10px 15px;
+            border-radius: 9px;
+            cursor: pointer;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #f9fafb;
+            border-color: #c7d2fe;
+        }
+
+        .last-updated {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        /* ================================
+           ERROR
+        ================================= */
+
+        .error {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 14px 17px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        /* ================================
+           KPI CARDS
+        ================================= */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 17px;
+            margin-bottom: 22px;
+        }
+
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07);
+        }
+
+        .kpi-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-label {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .kpi-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+
+        .purple {
+            background: #eef2ff;
+        }
+
+        .green {
+            background: #ecfdf5;
+        }
+
+        .orange {
+            background: #fffbeb;
+        }
+
+        .blue {
+            background: #eff6ff;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 750;
+            margin-top: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-description {
+            color: #9ca3af;
+            font-size: 10px;
+            margin-top: 5px;
+        }
+
+        /* ================================
+           INSIGHTS
+        ================================= */
+
+        .insights {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr;
+            gap: 17px;
+            margin-bottom: 22px;
+        }
+
+        .insight-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .insight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 13px;
+        }
+
+        .insight-title {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge {
+            font-size: 9px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .badge-green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-purple {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .insight-main {
+            font-size: 21px;
+            font-weight: 750;
+        }
+
+        .insight-sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 5px;
+        }
+
+        /* ================================
+           CHART GRID
+        ================================= */
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 750;
+            margin: 26px 0 13px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .chart-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .chart-card:hover {
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+        }
+
+        .chart-card.large {
+            grid-column: span 2;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .chart-description {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .chart-tag {
+            background: #f8fafc;
+            color: #64748b;
+            padding: 5px 9px;
+            border-radius: 7px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-container.small {
+            height: 270px;
+        }
+
+        /* ================================
+           QUICK ACTIONS
+        ================================= */
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .quick-action {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            border-color: #c7d2fe;
+            background: #fafaff;
+            transform: translateY(-2px);
+        }
+
+        .quick-icon {
+            font-size: 20px;
+            margin-bottom: 9px;
+        }
+
+        .quick-action h4 {
+            font-size: 12px;
+        }
+
+        .quick-action p {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        /* ================================
+           LOADING
+        ================================= */
+
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-box {
+            background: white;
+            padding: 24px 30px;
+            border-radius: 14px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e5e7eb;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: auto auto 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ================================
+           MOBILE
+        ================================= */
+
+        @media (max-width: 1200px) {
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .insights {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+
+            .brand-text,
+            .menu-title,
+            .nav-text,
+            .sidebar-bottom {
+                display: none;
+            }
+
+            .brand {
+                justify-content: center;
+                padding: 5px 0 25px;
+            }
+
+            .nav-item {
+                justify-content: center;
+            }
+
+            .main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+                padding: 22px;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card.large {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 650px) {
+
+            .main {
+                padding: 17px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .top-actions {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .insights {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .page-heading h1 {
+                font-size: 21px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- LOADING -->
+
+    <div
+        class="loading"
+        id="loading"
+    >
+
+        <div class="loading-box">
+
+            <div class="spinner"></div>
+
+            <div style="font-weight:700;font-size:13px;">
+                Loading Analytics
+            </div>
+
+            <div
+                style="color:#6b7280;font-size:11px;margin-top:5px;"
+            >
+                Reading student performance data...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="app">
+
+
+        <!-- ================================================
+             SIDEBAR
+        ================================================= -->
+
+        <aside class="sidebar">
+
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    🎓
+                </div>
+
+                <div class="brand-text">
+
+                    <h2>
+                        Academic AI
+                    </h2>
+
+                    <span>
+                        Performance Analytics
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="menu-title">
+                Analytics
+            </div>
+
+
+            <a
+                href="/"
+                class="nav-item active"
+            >
+
+                <span class="nav-icon">
+                    📊
+                </span>
+
+                <span class="nav-text">
+                    Dashboard
+                </span>
+
+            </a>
+
+
+            <a
+                href="/students"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    👨‍🎓
+                </span>
+
+                <span class="nav-text">
+                    Student Records
+                </span>
+
+            </a>
+
+
+            <div class="menu-title">
+                Machine Learning
+            </div>
+
+
+            <a
+                href="/predict"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    🔮
+                </span>
+
+                <span class="nav-text">
+                    Predict Student
+                </span>
+
+            </a>
+
+
+            <a
+                href="/what-if"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    🎯
+                </span>
+
+                <span class="nav-text">
+                    What-If Analysis
+                </span>
+
+            </a>
+
+
+            <a
+                href="/model-lab"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    🧪
+                </span>
+
+                <span class="nav-text">
+                    Model Lab
+                </span>
+
+            </a>
+
+
+            <div class="menu-title">
+                Management
+            </div>
+
+
+            <a
+                href="/add-student"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    ➕
+                </span>
+
+                <span class="nav-text">
+                    Add Student
+                </span>
+
+            </a>
+
+
+            <a
+                href="/retrain"
+                class="nav-item"
+            >
+
+                <span class="nav-icon">
+                    🔄
+                </span>
+
+                <span class="nav-text">
+                    Retrain Models
+                </span>
+
+            </a>
+
+
+            <div class="sidebar-bottom">
+
+                <div class="model-status">
+
+                    <div class="model-status-title">
+                        ML SYSTEM
+                    </div>
+
+                    <div class="online">
+
+                        <span class="online-dot"></span>
+
+                        Models Online
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </aside>
+
+
+        <!-- ================================================
+             MAIN
+        ================================================= -->
+
+        <main class="main">
+
+
+            <!-- TOP BAR -->
+
+            <div class="topbar">
+
+                <div class="page-heading">
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                    <p>
+                        Welcome back. Here's your academic performance overview.
+                    </p>
+
+                </div>
+
+
+                <div class="top-actions">
+
+                    <span
+                        class="last-updated"
+                        id="lastUpdated"
+                    >
+                        Updating...
+                    </span>
+
+                    <button
+                        class="refresh-btn"
+                        id="refreshBtn"
+                        type="button"
+                    >
+                        ↻ Refresh
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- ERROR -->
+
+            <div
+                class="error"
+                id="error"
+            ></div>
+
+
+            <!-- ================================================
+                 KPI CARDS
+            ================================================= -->
+
+            <div class="kpi-grid">
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <div class="kpi-label">
+                            TOTAL STUDENTS
+                        </div>
+
+                        <div class="kpi-icon purple">
+                            👨‍🎓
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="totalStudents"
+                    >
+                        --
+                    </div>
+
+                    <div class="kpi-description">
+                        Students in current dataset
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <div class="kpi-label">
+                            AVERAGE GPA
+                        </div>
+
+                        <div class="kpi-icon green">
+                            📈
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="averageGPA"
+                    >
+                        --
+                    </div>
+
+                    <div class="kpi-description">
+                        Overall academic performance
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <div class="kpi-label">
+                            HIGHEST GPA
+                        </div>
+
+                        <div class="kpi-icon orange">
+                            🏆
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="highestGPA"
+                    >
+                        --
+                    </div>
+
+                    <div class="kpi-description">
+                        Highest recorded GPA
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-card">
+
+                    <div class="kpi-top">
+
+                        <div class="kpi-label">
+                            LOWEST GPA
+                        </div>
+
+                        <div class="kpi-icon blue">
+                            📉
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="kpi-value"
+                        id="lowestGPA"
+                    >
+                        --
+                    </div>
+
+                    <div class="kpi-description">
+                        Lowest recorded GPA
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================
+                 INSIGHT CARDS
+            ================================================= -->
+
+            <div class="insights">
+
+
+                <div class="insight-card">
+
+                    <div class="insight-header">
+
+                        <div class="insight-title">
+                            🤖 AI Performance Insight
+                        </div>
+
+                        <span class="badge badge-purple">
+                            ANALYTICS
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="insight-main"
+                        id="mainInsight"
+                    >
+                        Analyzing student performance...
+                    </div>
+
+                    <div
+                        class="insight-sub"
+                        id="mainInsightSub"
+                    >
+                        Based on the current dataset
+                    </div>
+
+                </div>
+
+
+                <div class="insight-card">
+
+                    <div class="insight-header">
+
+                        <div class="insight-title">
+                            🎓 Grade Distribution
+                        </div>
+
+                        <span class="badge badge-green">
+                            LIVE
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="insight-main"
+                        id="topGrade"
+                    >
+                        --
+                    </div>
+
+                    <div class="insight-sub">
+                        Most common grade class
+                    </div>
+
+                </div>
+
+
+                <div class="insight-card">
+
+                    <div class="insight-header">
+
+                        <div class="insight-title">
+                            📚 Study Pattern
+                        </div>
+
+                        <span class="badge badge-purple">
+                            DATA
+                        </span>
+
+                    </div>
+
+                    <div
+                        class="insight-main"
+                        id="studyInsight"
+                    >
+                        --
+                    </div>
+
+                    <div class="insight-sub">
+                        Average weekly study time
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================
+                 PERFORMANCE ANALYTICS
+            ================================================= -->
+
+            <div class="section-title">
+                Performance Analytics
+            </div>
+
+
+            <div class="chart-grid">
+
+
+                <!-- GPA -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                GPA Distribution
+                            </div>
+
+                            <div class="chart-description">
+                                Distribution of students across GPA ranges
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            GPA
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container">
+
+                        <canvas id="gpaChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- GRADE -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Grade Class Distribution
+                            </div>
+
+                            <div class="chart-description">
+                                Students grouped by predicted performance class
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            CLASS
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container">
+
+                        <canvas id="gradeChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- GPA BY CLASS -->
+
+                <div class="chart-card large">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Average GPA by Grade Class
+                            </div>
+
+                            <div class="chart-description">
+                                Compare academic performance across grade classes
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            COMPARISON
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container">
+
+                        <canvas id="averageGradeChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- STUDY TIME -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Study Time vs GPA
+                            </div>
+
+                            <div class="chart-description">
+                                Relationship between weekly study time and GPA
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            BEHAVIOR
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container small">
+
+                        <canvas id="studyChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ABSENCES -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Absences vs GPA
+                            </div>
+
+                            <div class="chart-description">
+                                Attendance pattern and academic performance
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            ATTENDANCE
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container small">
+
+                        <canvas id="absenceChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PARENTAL SUPPORT -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Parental Support vs GPA
+                            </div>
+
+                            <div class="chart-description">
+                                Average GPA across support levels
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            SUPPORT
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container small">
+
+                        <canvas id="parentalChart"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIVITIES -->
+
+                <div class="chart-card">
+
+                    <div class="chart-header">
+
+                        <div>
+
+                            <div class="chart-title">
+                                Activities vs GPA
+                            </div>
+
+                            <div class="chart-description">
+                                Academic performance across student activities
+                            </div>
+
+                        </div>
+
+                        <div class="chart-tag">
+                            ACTIVITIES
+                        </div>
+
+                    </div>
+
+                    <div class="chart-container small">
+
+                        <canvas id="activityChart"></canvas>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================
+                 QUICK ACTIONS
+            ================================================= -->
+
+            <div class="section-title">
+                Quick Actions
+            </div>
+
+
+            <div class="quick-actions">
+
+
+                <a
+                    href="/add-student"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        ➕
+                    </div>
+
+                    <h4>
+                        Add Student
+                    </h4>
+
+                    <p>
+                        Add a new student record
+                    </p>
+
+                </a>
+
+
+                <a
+                    href="/predict"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        🔮
+                    </div>
+
+                    <h4>
+                        Predict Performance
+                    </h4>
+
+                    <p>
+                        Generate ML predictions
+                    </p>
+
+                </a>
+
+
+                <a
+                    href="/what-if"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        🎯
+                    </div>
+
+                    <h4>
+                        What-If Analysis
+                    </h4>
+
+                    <p>
+                        Explore student scenarios
+                    </p>
+
+                </a>
+
+
+                <a
+                    href="/model-lab"
+                    class="quick-action"
+                >
+
+                    <div class="quick-icon">
+                        🧪
+                    </div>
+
+                    <h4>
+                        Model Lab
+                    </h4>
+
+                    <p>
+                        Compare ML models
+                    </p>
+
+                </a>
+
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- ========================================================
+         JAVASCRIPT
+    ========================================================= -->
+
+    <script>
+
+        let gpaChart = null;
+        let gradeChart = null;
+        let studyChart = null;
+        let absenceChart = null;
+        let parentalChart = null;
+        let activityChart = null;
+        let averageGradeChart = null;
+
+
+        /* =====================================================
+           CHART DEFAULTS
+        ===================================================== */
+
+        Chart.defaults.font.family =
+            "Inter, Arial, sans-serif";
+
+        Chart.defaults.font.size = 11;
+
+        Chart.defaults.color =
+            "#64748b";
+
+
+        /* =====================================================
+           DESTROY CHARTS
+        ===================================================== */
+
+        function destroyCharts() {
+
+            const charts = [
+                gpaChart,
+                gradeChart,
+                studyChart,
+                absenceChart,
+                parentalChart,
+                activityChart,
+                averageGradeChart
+            ];
+
+            charts.forEach(chart => {
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+            });
+
+        }
+
+
+        /* =====================================================
+           CREATE GRADIENT
+        ===================================================== */
+
+        function createGradient(
+            ctx,
+            color1,
+            color2
+        ) {
+
+            const gradient =
+                ctx.createLinearGradient(
+                    0,
+                    0,
+                    0,
+                    300
+                );
+
+            gradient.addColorStop(
+                0,
+                color1
+            );
+
+            gradient.addColorStop(
+                1,
+                color2
+            );
+
+            return gradient;
+
+        }
+
+
+        /* =====================================================
+           LOAD DASHBOARD
+        ===================================================== */
+
+        async function loadDashboard() {
+
+            const loading =
+                document.getElementById(
+                    "loading"
+                );
+
+            const error =
+                document.getElementById(
+                    "error"
+                );
+
+
+            loading.style.display =
+                "flex";
+
+            error.style.display =
+                "none";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/dashboard"
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Dashboard API returned an error."
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.error ||
+                        "Unable to load dashboard."
+                    );
+
+                }
+
+
+                /* =============================================
+                   KPI DATA
+                ============================================= */
+
+                const totalStudents =
+                    Number(
+                        data.total_students
+                    );
+
+
+                const averageGPA =
+                    Number(
+                        data.average_gpa
+                    );
+
+
+                const highestGPA =
+                    Number(
+                        data.highest_gpa
+                    );
+
+
+                const lowestGPA =
+                    Number(
+                        data.lowest_gpa
+                    );
+
+
+                document.getElementById(
+                    "totalStudents"
+                ).textContent =
+                    totalStudents.toLocaleString();
+
+
+                document.getElementById(
+                    "averageGPA"
+                ).textContent =
+                    averageGPA.toFixed(2);
+
+
+                document.getElementById(
+                    "highestGPA"
+                ).textContent =
+                    highestGPA.toFixed(2);
+
+
+                document.getElementById(
+                    "lowestGPA"
+                ).textContent =
+                    lowestGPA.toFixed(2);
+
+
+                /* =============================================
+                   GRADE INSIGHT
+                ============================================= */
+
+                if (
+                    Array.isArray(
+                        data.grade_distribution
+                    ) &&
+                    data.grade_distribution.length > 0
+                ) {
+
+                    const sortedGrades =
+                        [
+                            ...data.grade_distribution
+                        ].sort(
+                            (a, b) =>
+                                Number(b.count) -
+                                Number(a.count)
+                        );
+
+
+                    const mostCommon =
+                        sortedGrades[0];
+
+
+                    document.getElementById(
+                        "topGrade"
+                    ).textContent =
+                        `Class ${mostCommon.grade_class}`;
+
+
+                    const percentage =
+                        (
+                            Number(
+                                mostCommon.count
+                            ) /
+                            totalStudents *
+                            100
+                        ).toFixed(1);
+
+
+                    document.getElementById(
+                        "mainInsight"
+                    ).textContent =
+                        `${percentage}% of students are in Class ${mostCommon.grade_class}`;
+
+
+                    document.getElementById(
+                        "mainInsightSub"
+                    ).textContent =
+                        "Based on the current grade-class distribution.";
+
+                }
+
+
+                /* =============================================
+                   STUDY TIME INSIGHT
+                ============================================= */
+
+                if (
+                    Array.isArray(
+                        data.study_time_data
+                    ) &&
+                    data.study_time_data.length > 0
+                ) {
+
+                    const studyValues =
+                        data.study_time_data.map(
+                            item =>
+                                Number(
+                                    item.study_time
+                                )
+                        );
+
+
+                    const averageStudy =
+                        studyValues.reduce(
+                            (
+                                total,
+                                value
+                            ) =>
+                                total + value,
+                            0
+                        ) /
+                        studyValues.length;
+
+
+                    document.getElementById(
+                        "studyInsight"
+                    ).textContent =
+                        `${averageStudy.toFixed(1)} hrs`;
+
+                }
+
+
+                /* =============================================
+                   DESTROY OLD CHARTS
+                ============================================= */
+
+                destroyCharts();
+
+
+                /* =============================================
+                   GPA DISTRIBUTION
+                ============================================= */
+
+                const gpaCanvas =
+                    document.getElementById(
+                        "gpaChart"
+                    );
+
+
+                const gpaContext =
+                    gpaCanvas.getContext(
+                        "2d"
+                    );
+
+
+                const gpaGradient =
+                    createGradient(
+                        gpaContext,
+                        "rgba(99,102,241,0.75)",
+                        "rgba(99,102,241,0.15)"
+                    );
+
+
+                gpaChart =
+                    new Chart(
+                        gpaCanvas,
+                        {
+
+                            type: "bar",
+
+                            data: {
+
+                                labels:
+                                    data.gpa_distribution.map(
+                                        item =>
+                                            item.range
+                                    ),
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Students",
+
+                                        data:
+                                            data.gpa_distribution.map(
+                                                item =>
+                                                    Number(
+                                                        item.count
+                                                    )
+                                            ),
+
+                                        backgroundColor:
+                                            gpaGradient,
+
+                                        borderColor:
+                                            "#6366f1",
+
+                                        borderWidth: 1,
+
+                                        borderRadius: 7,
+
+                                        hoverBackgroundColor:
+                                            "#4f46e5"
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                interaction: {
+
+                                    mode: "index",
+
+                                    intersect: false
+
+                                },
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    },
+
+                                    tooltip: {
+
+                                        backgroundColor:
+                                            "#111827",
+
+                                        padding: 12,
+
+                                        cornerRadius: 8,
+
+                                        displayColors:
+                                            false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    y: {
+
+                                        beginAtZero: true,
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        },
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                "Students"
+
+                                        }
+
+                                    },
+
+                                    x: {
+
+                                        grid: {
+
+                                            display:
+                                                false
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+                    );
+
+
+                /* =============================================
+                   GRADE DISTRIBUTION
+                ============================================= */
+
+                gradeChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "gradeChart"
+                        ),
+
+                        {
+
+                            type: "doughnut",
+
+                            data: {
+
+                                labels:
+                                    data.grade_distribution.map(
+                                        item =>
+                                            `Class ${item.grade_class}`
+                                    ),
+
+                                datasets: [
+
+                                    {
+
+                                        data:
+                                            data.grade_distribution.map(
+                                                item =>
+                                                    Number(
+                                                        item.count
+                                                    )
+                                            ),
+
+                                        backgroundColor: [
+
+                                            "#6366f1",
+                                            "#3b82f6",
+                                            "#10b981",
+                                            "#f59e0b",
+                                            "#ef4444"
+
+                                        ],
+
+                                        borderWidth: 3,
+
+                                        borderColor:
+                                            "#ffffff",
+
+                                        hoverOffset: 8
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                cutout: "68%",
+
+                                plugins: {
+
+                                    legend: {
+
+                                        position: "bottom",
+
+                                        labels: {
+
+                                            padding: 18,
+
+                                            usePointStyle:
+                                                true,
+
+                                            pointStyle:
+                                                "circle"
+
+                                        }
+
+                                    },
+
+                                    tooltip: {
+
+                                        backgroundColor:
+                                            "#111827",
+
+                                        padding: 12,
+
+                                        cornerRadius: 8
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   AVERAGE GPA BY CLASS
+                ============================================= */
+
+                averageGradeChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "averageGradeChart"
+                        ),
+
+                        {
+
+                            type: "line",
+
+                            data: {
+
+                                labels:
+                                    data.grade_gpa_data.map(
+                                        item =>
+                                            `Class ${item.grade_class}`
+                                    ),
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Average GPA",
+
+                                        data:
+                                            data.grade_gpa_data.map(
+                                                item =>
+                                                    Number(
+                                                        item.average_gpa
+                                                    )
+                                            ),
+
+                                        borderColor:
+                                            "#6366f1",
+
+                                        backgroundColor:
+                                            "rgba(99,102,241,0.12)",
+
+                                        borderWidth: 3,
+
+                                        pointBackgroundColor:
+                                            "#ffffff",
+
+                                        pointBorderColor:
+                                            "#6366f1",
+
+                                        pointBorderWidth: 3,
+
+                                        pointRadius: 6,
+
+                                        pointHoverRadius:
+                                            8,
+
+                                        fill: true,
+
+                                        tension: 0.35
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    y: {
+
+                                        min: 0,
+
+                                        max: 4,
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    },
+
+                                    x: {
+
+                                        grid: {
+
+                                            display:
+                                                false
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   STUDY TIME VS GPA
+                ============================================= */
+
+                studyChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "studyChart"
+                        ),
+
+                        {
+
+                            type: "scatter",
+
+                            data: {
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Students",
+
+                                        data:
+                                            data.study_time_data.map(
+                                                item => ({
+
+                                                    x:
+                                                        Number(
+                                                            item.study_time
+                                                        ),
+
+                                                    y:
+                                                        Number(
+                                                            item.gpa
+                                                        )
+
+                                                })
+                                            ),
+
+                                        backgroundColor:
+                                            "rgba(99,102,241,0.55)",
+
+                                        borderColor:
+                                            "#6366f1",
+
+                                        pointRadius: 4,
+
+                                        pointHoverRadius: 7
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    x: {
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                "Weekly Study Time"
+
+                                        },
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    },
+
+                                    y: {
+
+                                        min: 0,
+
+                                        max: 4,
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                "GPA"
+
+                                        },
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   ABSENCES VS GPA
+                ============================================= */
+
+                absenceChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "absenceChart"
+                        ),
+
+                        {
+
+                            type: "scatter",
+
+                            data: {
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Students",
+
+                                        data:
+                                            data.absences_data.map(
+                                                item => ({
+
+                                                    x:
+                                                        Number(
+                                                            item.absences
+                                                        ),
+
+                                                    y:
+                                                        Number(
+                                                            item.gpa
+                                                        )
+
+                                                })
+                                            ),
+
+                                        backgroundColor:
+                                            "rgba(239,68,68,0.45)",
+
+                                        borderColor:
+                                            "#ef4444",
+
+                                        pointRadius: 4,
+
+                                        pointHoverRadius: 7
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    x: {
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                "Absences"
+
+                                        },
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    },
+
+                                    y: {
+
+                                        min: 0,
+
+                                        max: 4,
+
+                                        title: {
+
+                                            display: true,
+
+                                            text:
+                                                "GPA"
+
+                                        },
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   PARENTAL SUPPORT
+                ============================================= */
+
+                parentalChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "parentalChart"
+                        ),
+
+                        {
+
+                            type: "bar",
+
+                            data: {
+
+                                labels:
+                                    data.parental_support_data.map(
+                                        item =>
+                                            `Support ${item.support}`
+                                    ),
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Average GPA",
+
+                                        data:
+                                            data.parental_support_data.map(
+                                                item =>
+                                                    Number(
+                                                        item.gpa
+                                                    )
+                                            ),
+
+                                        backgroundColor:
+                                            "rgba(16,185,129,0.65)",
+
+                                        borderColor:
+                                            "#10b981",
+
+                                        borderWidth: 1,
+
+                                        borderRadius: 7,
+
+                                        hoverBackgroundColor:
+                                            "#059669"
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    y: {
+
+                                        min: 0,
+
+                                        max: 4,
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    },
+
+                                    x: {
+
+                                        grid: {
+
+                                            display:
+                                                false
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   ACTIVITIES
+                ============================================= */
+
+                activityChart =
+                    new Chart(
+
+                        document.getElementById(
+                            "activityChart"
+                        ),
+
+                        {
+
+                            type: "bar",
+
+                            data: {
+
+                                labels:
+                                    data.activity_data.map(
+                                        item =>
+                                            item.activity
+                                    ),
+
+                                datasets: [
+
+                                    {
+
+                                        label:
+                                            "Average GPA",
+
+                                        data:
+                                            data.activity_data.map(
+                                                item =>
+                                                    Number(
+                                                        item.average_gpa
+                                                    )
+                                            ),
+
+                                        backgroundColor:
+                                            "rgba(245,158,11,0.65)",
+
+                                        borderColor:
+                                            "#f59e0b",
+
+                                        borderWidth: 1,
+
+                                        borderRadius: 7,
+
+                                        hoverBackgroundColor:
+                                            "#d97706"
+
+                                    }
+
+                                ]
+
+                            },
+
+                            options: {
+
+                                responsive: true,
+
+                                maintainAspectRatio: false,
+
+                                plugins: {
+
+                                    legend: {
+
+                                        display: false
+
+                                    }
+
+                                },
+
+                                scales: {
+
+                                    y: {
+
+                                        min: 0,
+
+                                        max: 4,
+
+                                        grid: {
+
+                                            color:
+                                                "#f1f5f9"
+
+                                        }
+
+                                    },
+
+                                    x: {
+
+                                        grid: {
+
+                                            display:
+                                                false
+
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    );
+
+
+                /* =============================================
+                   UPDATE TIME
+                ============================================= */
+
+                const now =
+                    new Date();
+
+
+                document.getElementById(
+                    "lastUpdated"
+                ).textContent =
+                    "Updated " +
+                    now.toLocaleTimeString(
+                        [],
+                        {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        }
+                    );
+
+
+            }
+
+            catch (err) {
+
+                console.error(
+                    "Dashboard Error:",
+                    err
+                );
+
+
+                error.textContent =
+                    "❌ " +
+                    err.message;
+
+
+                error.style.display =
+                    "block";
+
+            }
+
+            finally {
+
+                loading.style.display =
+                    "none";
+
+            }
+
+        }
+
+
+        /* =====================================================
+           REFRESH BUTTON
+        ===================================================== */
+
+        document.getElementById(
+            "refreshBtn"
+        ).addEventListener(
+            "click",
+            loadDashboard
+        );
+
+
+        /* =====================================================
+           INITIAL LOAD
+        ===================================================== */
+
+        loadDashboard();
+
+    </script>
+
+</body>
+
+</html>

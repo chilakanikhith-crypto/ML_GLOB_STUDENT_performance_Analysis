@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Student | Academic Performance Analytics</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header p {
+            margin-top: 6px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: white;
+            padding: 15px 35px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: #2563eb;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .section-title {
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 17px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+        }
+
+        input[readonly] {
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: bold;
+        }
+
+        .help {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .gpa-preview {
+            margin-top: 18px;
+            padding: 15px;
+            background: #eff6ff;
+            border-left: 5px solid #2563eb;
+            border-radius: 8px;
+            color: #1e40af;
+        }
+
+        .gpa-preview strong {
+            font-size: 18px;
+        }
+
+        .info {
+            margin-top: 20px;
+            background: #f0fdf4;
+            border-left: 5px solid #22c55e;
+            padding: 15px;
+            color: #166534;
+            line-height: 1.6;
+        }
+
+        .warning {
+            margin-top: 20px;
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 15px;
+            color: #9a3412;
+            line-height: 1.6;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        button {
+            border: none;
+            border-radius: 9px;
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .primary:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .secondary:hover {
+            background: #d1d5db;
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 5px solid #22c55e;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 5px solid #ef4444;
+        }
+
+        @media (max-width: 900px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 0 12px;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🎓 Academic Performance Analytics</h1>
+    <p>Add New Student Record</p>
+</header>
+
+<nav>
+
+    <a href="/">
+        🏠 Dashboard
+    </a>
+
+    <a href="/students">
+        👨‍🎓 Student Records
+    </a>
+
+    <a href="/add-student">
+        ➕ Add Student
+    </a>
+
+    <a href="/model-lab">
+        🧪 Model Lab
+    </a>
+
+    <a href="/predict">
+        🔮 Predict Student
+    </a>
+
+    <a href="/what-if">
+        🎯 What-If Analysis
+    </a>
+
+    <a href="/retrain">
+        🔄 Retrain Models
+    </a>
+
+</nav>
+
+
+<div class="container">
+
+    <div class="card">
+
+        <h2>➕ Add New Student</h2>
+
+        <p class="subtitle">
+            Add a new student record to the academic performance
+            dataset. The Student ID is generated automatically,
+            and Grade Class is calculated from the actual GPA.
+        </p>
+
+
+        <!-- =================================================
+             STUDENT INFORMATION
+             ================================================= -->
+
+        <h3 class="section-title">
+            👤 Student Information
+        </h3>
+
+        <div class="form-grid">
+
+            <div class="field">
+
+                <label>
+                    Student ID
+                </label>
+
+                <input
+                    type="number"
+                    id="StudentID"
+                    readonly
+                >
+
+                <span class="help">
+                    Automatically generated
+                </span>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Age
+                </label>
+
+                <input
+                    type="number"
+                    id="Age"
+                    min="10"
+                    max="30"
+                    value="17"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Gender
+                </label>
+
+                <select id="Gender" required>
+
+                    <option value="0">
+                        Male
+                    </option>
+
+                    <option value="1">
+                        Female
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Ethnicity
+                </label>
+
+                <input
+                    type="number"
+                    id="Ethnicity"
+                    min="0"
+                    value="0"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Parental Education
+                </label>
+
+                <input
+                    type="number"
+                    id="ParentalEducation"
+                    min="0"
+                    value="2"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             ACADEMIC / BEHAVIORAL INFORMATION
+             ================================================= -->
+
+        <h3 class="section-title">
+            📚 Academic & Behavioral Information
+        </h3>
+
+        <div class="form-grid">
+
+            <div class="field">
+
+                <label>
+                    Study Time Weekly
+                </label>
+
+                <input
+                    type="number"
+                    id="StudyTimeWeekly"
+                    min="0"
+                    step="0.1"
+                    value="10"
+                    required
+                >
+
+                <span class="help">
+                    Weekly study hours
+                </span>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Absences
+                </label>
+
+                <input
+                    type="number"
+                    id="Absences"
+                    min="0"
+                    value="5"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Tutoring
+                </label>
+
+                <select id="Tutoring" required>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Parental Support
+                </label>
+
+                <input
+                    type="number"
+                    id="ParentalSupport"
+                    min="0"
+                    value="2"
+                    required
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Extracurricular
+                </label>
+
+                <select
+                    id="Extracurricular"
+                    required>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Sports
+                </label>
+
+                <select id="Sports" required>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Music
+                </label>
+
+                <select id="Music" required>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Volunteering
+                </label>
+
+                <select
+                    id="Volunteering"
+                    required>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             GPA
+             ================================================= -->
+
+        <h3 class="section-title">
+            📈 Actual Academic Result
+        </h3>
+
+        <div class="form-grid">
+
+            <div class="field">
+
+                <label>
+                    Actual GPA
+                </label>
+
+                <input
+                    type="number"
+                    id="GPA"
+                    min="0"
+                    max="4"
+                    step="0.01"
+                    value="2.50"
+                    required
+                    oninput="updateGradePreview()"
+                >
+
+                <span class="help">
+                    Enter actual GPA between 0 and 4
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="gpa-preview">
+
+            <div>
+                Calculated Grade Class:
+                <strong id="gradePreview">
+                    2
+                </strong>
+            </div>
+
+            <div
+                id="gradeDescription"
+                style="margin-top:5px;">
+                Average
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             INFORMATION
+             ================================================= -->
+
+        <div class="info">
+
+            <strong>
+                ℹ️ Important:
+            </strong>
+
+            <br>
+
+            The actual GPA entered here is used only when
+            storing the student's real academic result.
+            It is <strong>not</strong> used as an input feature
+            when the machine-learning classifier predicts
+            Grade Class.
+
+        </div>
+
+
+        <div class="warning">
+
+            <strong>
+                ⚠️ After adding students:
+            </strong>
+
+            If you want the new student records to influence
+            future machine-learning predictions, use the
+            <strong>Retrain Models</strong> page after adding
+            the records.
+
+        </div>
+
+
+        <!-- =================================================
+             BUTTONS
+             ================================================= -->
+
+        <div class="button-row">
+
+            <button
+                class="primary"
+                id="saveButton"
+                onclick="addStudent()">
+
+                💾 Save Student
+
+            </button>
+
+
+            <button
+                class="secondary"
+                onclick="resetForm()">
+
+                🔄 Reset
+
+            </button>
+
+        </div>
+
+
+        <div id="message"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// GRADE CLASS CALCULATION
+// ============================================================
+
+function calculateGradeClass(gpa) {
+
+    if (gpa >= 3.5) {
+        return 0;
+    }
+
+    if (gpa >= 3.0) {
+        return 1;
+    }
+
+    if (gpa >= 2.5) {
+        return 2;
+    }
+
+    if (gpa >= 2.0) {
+        return 3;
+    }
+
+    return 4;
+}
+
+
+function getGradeDescription(gradeClass) {
+
+    const descriptions = {
+
+        0: "Excellent",
+
+        1: "Very Good",
+
+        2: "Average",
+
+        3: "Below Average",
+
+        4: "At Risk"
+
+    };
+
+    return (
+        descriptions[gradeClass] ||
+        "Unknown"
+    );
+}
+
+
+// ============================================================
+// UPDATE GPA PREVIEW
+// ============================================================
+
+function updateGradePreview() {
+
+    const gpaInput =
+        document.getElementById(
+            "GPA"
+        );
+
+    const gpa =
+        Number(
+            gpaInput.value
+        );
+
+
+    if (
+        isNaN(gpa) ||
+        gpa < 0 ||
+        gpa > 4
+    ) {
+
+        document.getElementById(
+            "gradePreview"
+        ).textContent = "-";
+
+        document.getElementById(
+            "gradeDescription"
+        ).textContent =
+            "Enter a valid GPA between 0 and 4.";
+
+        return;
+
+    }
+
+
+    const gradeClass =
+        calculateGradeClass(
+            gpa
+        );
+
+
+    document.getElementById(
+        "gradePreview"
+    ).textContent =
+        gradeClass;
+
+
+    document.getElementById(
+        "gradeDescription"
+    ).textContent =
+        getGradeDescription(
+            gradeClass
+        );
+
+}
+
+
+// ============================================================
+// LOAD NEXT STUDENT ID
+// ============================================================
+
+async function loadNextStudentID() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/next-student-id"
+            );
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Unable to generate Student ID."
+            );
+
+        }
+
+
+        document.getElementById(
+            "StudentID"
+        ).value =
+            data.student_id;
+
+    }
+
+    catch (error) {
+
+        showMessage(
+            "❌ " + error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// GET FORM DATA
+// ============================================================
+
+function getFormData() {
+
+    return {
+
+        StudentID:
+            Number(
+                document.getElementById(
+                    "StudentID"
+                ).value
+            ),
+
+        Age:
+            Number(
+                document.getElementById(
+                    "Age"
+                ).value
+            ),
+
+        Gender:
+            Number(
+                document.getElementById(
+                    "Gender"
+                ).value
+            ),
+
+        Ethnicity:
+            Number(
+                document.getElementById(
+                    "Ethnicity"
+                ).value
+            ),
+
+        ParentalEducation:
+            Number(
+                document.getElementById(
+                    "ParentalEducation"
+                ).value
+            ),
+
+        StudyTimeWeekly:
+            Number(
+                document.getElementById(
+                    "StudyTimeWeekly"
+                ).value
+            ),
+
+        Absences:
+            Number(
+                document.getElementById(
+                    "Absences"
+                ).value
+            ),
+
+        Tutoring:
+            Number(
+                document.getElementById(
+                    "Tutoring"
+                ).value
+            ),
+
+        ParentalSupport:
+            Number(
+                document.getElementById(
+                    "ParentalSupport"
+                ).value
+            ),
+
+        Extracurricular:
+            Number(
+                document.getElementById(
+                    "Extracurricular"
+                ).value
+            ),
+
+        Sports:
+            Number(
+                document.getElementById(
+                    "Sports"
+                ).value
+            ),
+
+        Music:
+            Number(
+                document.getElementById(
+                    "Music"
+                ).value
+            ),
+
+        Volunteering:
+            Number(
+                document.getElementById(
+                    "Volunteering"
+                ).value
+            ),
+
+        GPA:
+            Number(
+                document.getElementById(
+                    "GPA"
+                ).value
+            )
+
+    };
+
+}
+
+
+// ============================================================
+// VALIDATION
+// ============================================================
+
+function validateStudent(data) {
+
+    if (
+        !data.Age ||
+        data.Age < 10 ||
+        data.Age > 30
+    ) {
+
+        return "Age must be between 10 and 30.";
+
+    }
+
+
+    if (
+        isNaN(data.GPA) ||
+        data.GPA < 0 ||
+        data.GPA > 4
+    ) {
+
+        return "GPA must be between 0 and 4.";
+
+    }
+
+
+    if (
+        data.StudyTimeWeekly < 0
+    ) {
+
+        return "Study Time Weekly cannot be negative.";
+
+    }
+
+
+    if (
+        data.Absences < 0
+    ) {
+
+        return "Absences cannot be negative.";
+
+    }
+
+
+    return null;
+
+}
+
+
+// ============================================================
+// ADD STUDENT
+// ============================================================
+
+async function addStudent() {
+
+    const button =
+        document.getElementById(
+            "saveButton"
+        );
+
+
+    const data =
+        getFormData();
+
+
+    const validationError =
+        validateStudent(
+            data
+        );
+
+
+    if (validationError) {
+
+        showMessage(
+            "❌ " + validationError,
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "⏳ Saving...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/add-student",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(data)
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !result.success
+        ) {
+
+            throw new Error(
+                result.error ||
+                "Unable to add student."
+            );
+
+        }
+
+
+        showMessage(
+
+            `✅ Student ${result.student.StudentID}
+             was added successfully.
+             Grade Class: ${result.student.GradeClass}`,
+
+            "success"
+
+        );
+
+
+        resetFieldsOnly();
+
+        await loadNextStudentID();
+
+        updateGradePreview();
+
+    }
+
+    catch (error) {
+
+        showMessage(
+            "❌ " + error.message,
+            "error"
+        );
+
+    }
+
+    finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            "💾 Save Student";
+
+    }
+
+}
+
+
+// ============================================================
+// RESET INPUT FIELDS
+// ============================================================
+
+function resetFieldsOnly() {
+
+    document.getElementById(
+        "Age"
+    ).value = "17";
+
+    document.getElementById(
+        "Gender"
+    ).value = "0";
+
+    document.getElementById(
+        "Ethnicity"
+    ).value = "0";
+
+    document.getElementById(
+        "ParentalEducation"
+    ).value = "2";
+
+    document.getElementById(
+        "StudyTimeWeekly"
+    ).value = "10";
+
+    document.getElementById(
+        "Absences"
+    ).value = "5";
+
+    document.getElementById(
+        "Tutoring"
+    ).value = "0";
+
+    document.getElementById(
+        "ParentalSupport"
+    ).value = "2";
+
+    document.getElementById(
+        "Extracurricular"
+    ).value = "0";
+
+    document.getElementById(
+        "Sports"
+    ).value = "0";
+
+    document.getElementById(
+        "Music"
+    ).value = "0";
+
+    document.getElementById(
+        "Volunteering"
+    ).value = "0";
+
+    document.getElementById(
+        "GPA"
+    ).value = "2.50";
+
+}
+
+
+// ============================================================
+// COMPLETE RESET
+// ============================================================
+
+function resetForm() {
+
+    resetFieldsOnly();
+
+    loadNextStudentID();
+
+    updateGradePreview();
+
+    document.getElementById(
+        "message"
+    ).style.display = "none";
+
+}
+
+
+// ============================================================
+// MESSAGE
+// ============================================================
+
+function showMessage(
+    message,
+    type
+) {
+
+    const box =
+        document.getElementById(
+            "message"
+        );
+
+
+    box.textContent =
+        message;
+
+
+    box.className =
+        type;
+
+
+    box.style.display =
+        "block";
+
+}
+
+
+// ============================================================
+// INITIALIZE PAGE
+// ============================================================
+
+loadNextStudentID();
+
+updateGradePreview();
+
+</script>
+
+</body>
+</html>

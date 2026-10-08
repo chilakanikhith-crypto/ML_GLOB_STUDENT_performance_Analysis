@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Predict Student | Academic AI</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        :root {
+            --bg: #f5f7fb;
+            --sidebar: #111827;
+            --sidebar-hover: #1f2937;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* =========================================
+           APP
+        ========================================= */
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* =========================================
+           SIDEBAR
+        ========================================= */
+
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar);
+            color: white;
+            padding: 22px 15px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 5px 12px 28px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(
+                135deg,
+                #6366f1,
+                #8b5cf6
+            );
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 21px;
+        }
+
+        .brand-text h2 {
+            font-size: 16px;
+        }
+
+        .brand-text span {
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .menu-title {
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1.2px;
+            padding: 12px;
+            text-transform: uppercase;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 13px;
+            margin: 4px 0;
+            border-radius: 10px;
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: white;
+            transform: translateX(2px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(
+                90deg,
+                rgba(99, 102, 241, 0.25),
+                rgba(99, 102, 241, 0.08)
+            );
+            color: white;
+            border-left: 3px solid #818cf8;
+        }
+
+        .nav-icon {
+            width: 22px;
+            text-align: center;
+        }
+
+        .sidebar-bottom {
+            position: absolute;
+            left: 15px;
+            right: 15px;
+            bottom: 20px;
+        }
+
+        .model-status {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .model-status-title {
+            color: #9ca3af;
+            font-size: 10px;
+            margin-bottom: 8px;
+        }
+
+        .online {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        /* =========================================
+           MAIN
+        ========================================= */
+
+        .main {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+            padding: 30px 35px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-size: 27px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header p {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* =========================================
+           GRID
+        ========================================= */
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 22px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 750;
+            margin-bottom: 5px;
+        }
+
+        .card-description {
+            color: var(--muted);
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+
+        /* =========================================
+           FORM
+        ========================================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: span 2;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 650;
+            color: #374151;
+            margin-bottom: 7px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            padding: 0 12px;
+            background: #fff;
+            color: #111827;
+            font-size: 12px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(
+                99,
+                102,
+                241,
+                0.10
+            );
+        }
+
+        .hint {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 5px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 11px 18px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* =========================================
+           NO LEAKAGE
+        ========================================= */
+
+        .info-box {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            color: #3730a3;
+            border-radius: 10px;
+            padding: 13px;
+            font-size: 10px;
+            line-height: 1.6;
+            margin-top: 18px;
+        }
+
+        /* =========================================
+           RESULT
+        ========================================= */
+
+        .result-panel {
+            display: none;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .prediction-badge {
+            background: #ede9fe;
+            color: #6d28d9;
+            border-radius: 20px;
+            padding: 6px 10px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .prediction-main {
+            background: linear-gradient(
+                135deg,
+                #eef2ff,
+                #f5f3ff
+            );
+            border: 1px solid #ddd6fe;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .prediction-label {
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .prediction-gpa {
+            font-size: 45px;
+            font-weight: 800;
+            color: #4f46e5;
+            margin-top: 4px;
+        }
+
+        .prediction-class {
+            color: #4b5563;
+            font-size: 12px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .result-box {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 14px;
+        }
+
+        .result-box-label {
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .result-box-value {
+            font-size: 17px;
+            font-weight: 750;
+            margin-top: 6px;
+        }
+
+        /* =========================================
+           AI ADVISOR
+        ========================================= */
+
+        .advisor {
+            margin-top: 18px;
+            border: 1px solid #ddd6fe;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .advisor-header {
+            background: linear-gradient(
+                135deg,
+                #4f46e5,
+                #7c3aed
+            );
+            color: white;
+            padding: 16px;
+        }
+
+        .advisor-title {
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .advisor-subtitle {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .advisor-body {
+            padding: 15px;
+            background: #fafaff;
+        }
+
+        .recommendation {
+            display: flex;
+            gap: 11px;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 9px;
+        }
+
+        .recommendation:last-child {
+            margin-bottom: 0;
+        }
+
+        .recommendation-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 15px;
+        }
+
+        .recommendation-content h4 {
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .recommendation-content p {
+            color: #6b7280;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .priority-high {
+            background: #fef2f2;
+        }
+
+        .priority-medium {
+            background: #fffbeb;
+        }
+
+        .priority-good {
+            background: #ecfdf5;
+        }
+
+        .overall {
+            margin-top: 12px;
+            background: #111827;
+            color: white;
+            border-radius: 11px;
+            padding: 14px;
+        }
+
+        .overall-title {
+            font-size: 10px;
+            color: #a5b4fc;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .overall-text {
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           PROBABILITIES
+        ========================================= */
+
+        .probabilities {
+            margin-top: 17px;
+        }
+
+        .probability-row {
+            margin-bottom: 11px;
+        }
+
+        .probability-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .progress {
+            height: 7px;
+            background: #eef2f7;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(
+                90deg,
+                #6366f1,
+                #8b5cf6
+            );
+            transition: width 0.6s ease;
+        }
+
+        /* =========================================
+           DISCLAIMER
+        ========================================= */
+
+        .disclaimer {
+            margin-top: 15px;
+            padding: 11px;
+            border-radius: 9px;
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 9px;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .error {
+            display: none;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 12px;
+            border-radius: 9px;
+            margin-bottom: 15px;
+            font-size: 11px;
+        }
+
+        /* =========================================
+           LOADING
+        ========================================= */
+
+        .loading {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(
+                255,
+                255,
+                255,
+                0.75
+            );
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-box {
+            background: white;
+            border-radius: 14px;
+            padding: 25px 30px;
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,0.12);
+            text-align: center;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 1100px) {
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        @media (max-width: 900px) {
+
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+
+            .brand-text,
+            .menu-title,
+            .nav-text,
+            .sidebar-bottom {
+                display: none;
+            }
+
+            .brand {
+                justify-content: center;
+                padding: 5px 0 25px;
+            }
+
+            .nav-item {
+                justify-content: center;
+            }
+
+            .main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+                padding: 22px;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .main {
+                padding: 17px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: span 1;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header h1 {
+                font-size: 22px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ============================================
+     LOADING
+============================================= -->
+
+<div
+    class="loading"
+    id="loading"
+>
+
+    <div class="loading-box">
+
+        <div class="spinner"></div>
+
+        <div
+            style="
+                font-size:13px;
+                font-weight:700;
+            "
+        >
+            AI is analyzing the student...
+        </div>
+
+        <div
+            style="
+                color:#6b7280;
+                font-size:10px;
+                margin-top:5px;
+            "
+        >
+            Generating academic prediction
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="app">
+
+
+    <!-- =========================================
+         SIDEBAR
+    ========================================== -->
+
+    <aside class="sidebar">
+
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🎓
+            </div>
+
+            <div class="brand-text">
+
+                <h2>
+                    Academic AI
+                </h2>
+
+                <span>
+                    Performance Analytics
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="menu-title">
+            Analytics
+        </div>
+
+
+        <a
+            href="/"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                📊
+            </span>
+
+            <span class="nav-text">
+                Dashboard
+            </span>
+
+        </a>
+
+
+        <a
+            href="/students"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                👨‍🎓
+            </span>
+
+            <span class="nav-text">
+                Student Records
+            </span>
+
+        </a>
+
+
+        <div class="menu-title">
+            Machine Learning
+        </div>
+
+
+        <a
+            href="/predict"
+            class="nav-item active"
+        >
+
+            <span class="nav-icon">
+                🔮
+            </span>
+
+            <span class="nav-text">
+                Predict Student
+            </span>
+
+        </a>
+
+
+        <a
+            href="/what-if"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                🎯
+            </span>
+
+            <span class="nav-text">
+                What-If Analysis
+            </span>
+
+        </a>
+
+
+        <a
+            href="/model-lab"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                🧪
+            </span>
+
+            <span class="nav-text">
+                Model Lab
+            </span>
+
+        </a>
+
+
+        <div class="menu-title">
+            Management
+        </div>
+
+
+        <a
+            href="/add-student"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                ➕
+            </span>
+
+            <span class="nav-text">
+                Add Student
+            </span>
+
+        </a>
+
+
+        <a
+            href="/retrain"
+            class="nav-item"
+        >
+
+            <span class="nav-icon">
+                🔄
+            </span>
+
+            <span class="nav-text">
+                Retrain Models
+            </span>
+
+        </a>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="model-status">
+
+                <div class="model-status-title">
+                    ML SYSTEM
+                </div>
+
+                <div class="online">
+
+                    <span class="online-dot"></span>
+
+                    Models Online
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </aside>
+
+
+    <!-- =========================================
+         MAIN
+    ========================================== -->
+
+    <main class="main">
+
+
+        <div class="page-header">
+
+            <h1>
+                🔮 Predict Student Performance
+            </h1>
+
+            <p>
+                Enter student information to generate an AI-powered academic prediction and personalized guidance.
+            </p>
+
+        </div>
+
+
+        <div
+            class="error"
+            id="error"
+        ></div>
+
+
+        <div class="content-grid">
+
+
+            <!-- =====================================
+                 INPUT FORM
+            ====================================== -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    Student Information
+                </div>
+
+                <div class="card-description">
+                    Provide the student's behavioral and demographic information.
+                </div>
+
+
+                <form id="predictionForm">
+
+
+                    <div class="form-grid">
+
+
+                        <!-- AGE -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Age
+                            </label>
+
+                            <input
+                                type="number"
+                                name="Age"
+                                min="10"
+                                max="30"
+                                value="18"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- GENDER -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Gender
+                            </label>
+
+                            <select
+                                name="Gender"
+                                required
+                            >
+
+                                <option value="0">
+                                    Female
+                                </option>
+
+                                <option value="1">
+                                    Male
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- ETHNICITY -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Ethnicity
+                            </label>
+
+                            <input
+                                type="number"
+                                name="Ethnicity"
+                                min="0"
+                                max="10"
+                                value="0"
+                                required
+                            >
+
+                            <span class="hint">
+                                Dataset encoded value
+                            </span>
+
+                        </div>
+
+
+                        <!-- PARENT EDUCATION -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Parental Education
+                            </label>
+
+                            <input
+                                type="number"
+                                name="ParentalEducation"
+                                min="0"
+                                max="10"
+                                value="2"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- STUDY TIME -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Weekly Study Time
+                            </label>
+
+                            <input
+                                type="number"
+                                name="StudyTimeWeekly"
+                                min="0"
+                                max="60"
+                                step="0.1"
+                                value="10"
+                                required
+                            >
+
+                            <span class="hint">
+                                Hours per week
+                            </span>
+
+                        </div>
+
+
+                        <!-- ABSENCES -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Absences
+                            </label>
+
+                            <input
+                                type="number"
+                                name="Absences"
+                                min="0"
+                                max="100"
+                                value="10"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- TUTORING -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Tutoring
+                            </label>
+
+                            <select
+                                name="Tutoring"
+                                required
+                            >
+
+                                <option value="0">
+                                    No
+                                </option>
+
+                                <option value="1">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- PARENTAL SUPPORT -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Parental Support
+                            </label>
+
+                            <select
+                                name="ParentalSupport"
+                                required
+                            >
+
+                                <option value="0">
+                                    None
+                                </option>
+
+                                <option value="1">
+                                    Low
+                                </option>
+
+                                <option value="2"
+                                    selected>
+                                    Moderate
+                                </option>
+
+                                <option value="3">
+                                    High
+                                </option>
+
+                                <option value="4">
+                                    Very High
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- EXTRACURRICULAR -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Extracurricular
+                            </label>
+
+                            <select
+                                name="Extracurricular"
+                                required
+                            >
+
+                                <option value="0">
+                                    No
+                                </option>
+
+                                <option value="1">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- SPORTS -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Sports
+                            </label>
+
+                            <select
+                                name="Sports"
+                                required
+                            >
+
+                                <option value="0">
+                                    No
+                                </option>
+
+                                <option value="1">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- MUSIC -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Music
+                            </label>
+
+                            <select
+                                name="Music"
+                                required
+                            >
+
+                                <option value="0">
+                                    No
+                                </option>
+
+                                <option value="1">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- VOLUNTEERING -->
+
+                        <div class="form-group">
+
+                            <label>
+                                Volunteering
+                            </label>
+
+                            <select
+                                name="Volunteering"
+                                required
+                            >
+
+                                <option value="0">
+                                    No
+                                </option>
+
+                                <option value="1">
+                                    Yes
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="button-row">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            🤖 Generate Prediction
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="resetBtn"
+                        >
+                            Reset
+                        </button>
+
+                    </div>
+
+
+                </form>
+
+
+                <div class="info-box">
+
+                    🔒 <strong>No Data Leakage:</strong>
+
+                    Actual GPA is intentionally not requested.
+                    The model predicts GPA using only the 12 approved behavioral and demographic features.
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================
+                 RESULT
+            ====================================== -->
+
+            <div
+                class="card result-panel"
+                id="resultPanel"
+            >
+
+
+                <div class="result-header">
+
+                    <div>
+
+                        <div class="card-title">
+                            Prediction Result
+                        </div>
+
+                        <div class="card-description">
+                            Machine-learning generated academic assessment
+                        </div>
+
+                    </div>
+
+                    <span class="prediction-badge">
+                        AI PREDICTION
+                    </span>
+
+                </div>
+
+
+                <!-- MAIN PREDICTION -->
+
+                <div class="prediction-main">
+
+                    <div class="prediction-label">
+                        Predicted GPA
+                    </div>
+
+                    <div
+                        class="prediction-gpa"
+                        id="predictedGPA"
+                    >
+                        --
+                    </div>
+
+                    <div
+                        class="prediction-class"
+                        id="predictedClass"
+                    >
+                        Grade Class --
+                    </div>
+
+                </div>
+
+
+                <!-- RESULT BOXES -->
+
+                <div class="result-grid">
+
+
+                    <div class="result-box">
+
+                        <div class="result-box-label">
+                            Performance
+                        </div>
+
+                        <div
+                            class="result-box-value"
+                            id="performanceCategory"
+                        >
+                            --
+                        </div>
+
+                    </div>
+
+
+                    <div class="result-box">
+
+                        <div class="result-box-label">
+                            Model Status
+                        </div>
+
+                        <div
+                            class="result-box-value"
+                            id="modelStatus"
+                        >
+                            --
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- =================================
+                     AI ADVISOR
+                ================================== -->
+
+                <div class="advisor">
+
+
+                    <div class="advisor-header">
+
+                        <div class="advisor-title">
+                            🤖 AI Academic Advisor
+                        </div>
+
+                        <div class="advisor-subtitle">
+                            Personalized model-informed guidance
+                        </div>
+
+                    </div>
+
+
+                    <div class="advisor-body">
+
+                        <div id="recommendations"></div>
+
+
+                        <div class="overall">
+
+                            <div class="overall-title">
+                                🎯 Overall Recommendation
+                            </div>
+
+                            <div
+                                class="overall-text"
+                                id="overallRecommendation"
+                            >
+                                --
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================
+                     CLASS PROBABILITIES
+                ================================== -->
+
+                <div
+                    class="probabilities"
+                    id="probabilities"
+                >
+
+                    <div
+                        style="
+                            font-size:11px;
+                            font-weight:750;
+                            margin-bottom:12px;
+                        "
+                    >
+                        Grade Class Probabilities
+                    </div>
+
+                    <div id="probabilityList"></div>
+
+                </div>
+
+
+                <div class="disclaimer">
+
+                    ⚠️ <strong>Important:</strong>
+                    Predictions and recommendations are generated from the trained machine-learning model.
+                    They are model-based guidance and should not be interpreted as guaranteed causal outcomes.
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
+
+</div>
+
+
+<script>
+
+    /* =========================================================
+       ELEMENTS
+    ========================================================= */
+
+    const form =
+        document.getElementById(
+            "predictionForm"
+        );
+
+    const resultPanel =
+        document.getElementById(
+            "resultPanel"
+        );
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "error"
+        );
+
+    const resetButton =
+        document.getElementById(
+            "resetBtn"
+        );
+
+
+    /* =========================================================
+       FORM DATA
+    ========================================================= */
+
+    function getFormData() {
+
+        const formData =
+            new FormData(form);
+
+        const data = {};
+
+        formData.forEach(
+            (value, key) => {
+
+                const numberValue =
+                    Number(value);
+
+                if (
+                    value !== "" &&
+                    !Number.isNaN(
+                        numberValue
+                    )
+                ) {
+
+                    data[key] =
+                        numberValue;
+
+                } else {
+
+                    data[key] =
+                        value;
+
+                }
+
+            }
+        );
+
+        return data;
+
+    }
+
+
+    /* =========================================================
+       ADVISOR
+    ========================================================= */
+
+    function generateRecommendations(
+        student,
+        prediction
+    ) {
+
+        const recommendations = [];
+
+
+        const studyTime =
+            Number(
+                student.StudyTimeWeekly
+            );
+
+
+        const absences =
+            Number(
+                student.Absences
+            );
+
+
+        const tutoring =
+            Number(
+                student.Tutoring
+            );
+
+
+        const parentalSupport =
+            Number(
+                student.ParentalSupport
+            );
+
+
+        const extracurricular =
+            Number(
+                student.Extracurricular
+            );
+
+
+        const sports =
+            Number(
+                student.Sports
+            );
+
+
+        const music =
+            Number(
+                student.Music
+            );
+
+
+        const volunteering =
+            Number(
+                student.Volunteering
+            );
+
+
+        /* =====================================
+           STUDY TIME
+        ====================================== */
+
+        if (studyTime < 8) {
+
+            recommendations.push({
+
+                icon: "📚",
+
+                className:
+                    "priority-high",
+
+                title:
+                    "Study Time Needs Attention",
+
+                text:
+                    `Current study time is ${studyTime} hours/week. Consider building a more consistent study routine.`
+
+            });
+
+        } else if (studyTime < 15) {
+
+            recommendations.push({
+
+                icon: "📖",
+
+                className:
+                    "priority-medium",
+
+                title:
+                    "Increase Study Consistency",
+
+                text:
+                    `Current study time is ${studyTime} hours/week. A consistent increase may support stronger academic preparation.`
+
+            });
+
+        } else {
+
+            recommendations.push({
+
+                icon: "✅",
+
+                className:
+                    "priority-good",
+
+                title:
+                    "Strong Study Pattern",
+
+                text:
+                    `The student reports ${studyTime} hours/week of study time, indicating a strong study commitment.`
+
+            });
+
+        }
+
+
+        /* =====================================
+           ABSENCES
+        ====================================== */
+
+        if (absences >= 20) {
+
+            recommendations.push({
+
+                icon: "🚨",
+
+                className:
+                    "priority-high",
+
+                title:
+                    "Attendance Requires Attention",
+
+                text:
+                    `There are ${absences} absences. Improving attendance may help maintain consistent learning.`
+
+            });
+
+        } else if (absences >= 10) {
+
+            recommendations.push({
+
+                icon: "🏫",
+
+                className:
+                    "priority-medium",
+
+                title:
+                    "Monitor Attendance",
+
+                text:
+                    `There are ${absences} absences. Maintaining regular attendance should remain a priority.`
+
+            });
+
+        } else {
+
+            recommendations.push({
+
+                icon: "✅",
+
+                className:
+                    "priority-good",
+
+                title:
+                    "Good Attendance Pattern",
+
+                text:
+                    `The student has ${absences} absences, indicating relatively good attendance in the provided data.`
+
+            });
+
+        }
+
+
+        /* =====================================
+           TUTORING
+        ====================================== */
+
+        if (
+            tutoring === 0 &&
+            Number(
+                prediction.predicted_gpa
+            ) < 2.5
+        ) {
+
+            recommendations.push({
+
+                icon: "👨‍🏫",
+
+                className:
+                    "priority-medium",
+
+                title:
+                    "Consider Academic Support",
+
+                text:
+                    "Tutoring is currently not reported. Additional academic support may be worth considering if the student is struggling."
+
+            });
+
+        }
+
+
+        /* =====================================
+           PARENTAL SUPPORT
+        ====================================== */
+
+        if (
+            parentalSupport <= 1
+        ) {
+
+            recommendations.push({
+
+                icon: "👨‍👩‍👦",
+
+                className:
+                    "priority-medium",
+
+                title:
+                    "Increase Academic Support",
+
+                text:
+                    "The reported parental support level is relatively low. Regular academic communication may be helpful."
+
+            });
+
+        }
+
+
+        /* =====================================
+           ACTIVITIES
+        ====================================== */
+
+        if (
+            extracurricular === 0 &&
+            sports === 0 &&
+            music === 0 &&
+            volunteering === 0
+        ) {
+
+            recommendations.push({
+
+                icon: "🌱",
+
+                className:
+                    "priority-medium",
+
+                title:
+                    "Consider Balanced Activities",
+
+                text:
+                    "No extracurricular activities are reported. A balanced academic and activity routine may support broader student development."
+
+            });
+
+        }
+
+
+        /* =====================================
+           HIGH PERFORMANCE
+        ====================================== */
+
+        if (
+            Number(
+                prediction.predicted_gpa
+            ) >= 3.5
+        ) {
+
+            recommendations.push({
+
+                icon: "🏆",
+
+                className:
+                    "priority-good",
+
+                title:
+                    "Maintain Strong Performance",
+
+                text:
+                    "The predicted GPA is strong. Focus on maintaining consistency rather than making major changes."
+
+            });
+
+        }
+
+
+        return recommendations;
+
+    }
+
+
+    /* =========================================================
+       RENDER ADVISOR
+    ========================================================= */
+
+    function renderAdvisor(
+        student,
+        prediction
+    ) {
+
+        const container =
+            document.getElementById(
+                "recommendations"
+            );
+
+
+        container.innerHTML = "";
+
+
+        const recommendations =
+            generateRecommendations(
+                student,
+                prediction
+            );
+
+
+        recommendations
+            .slice(0, 5)
+            .forEach(
+                recommendation => {
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+                    div.className =
+                        "recommendation";
+
+
+                    div.innerHTML = `
+
+                        <div
+                            class="
+                                recommendation-icon
+                                ${recommendation.className}
+                            "
+                        >
+                            ${recommendation.icon}
+                        </div>
+
+                        <div
+                            class="
+                                recommendation-content
+                            "
+                        >
+
+                            <h4>
+                                ${recommendation.title}
+                            </h4>
+
+                            <p>
+                                ${recommendation.text}
+                            </p>
+
+                        </div>
+
+                    `;
+
+
+                    container.appendChild(
+                        div
+                    );
+
+                }
+            );
+
+
+        /* =====================================
+           OVERALL RECOMMENDATION
+        ====================================== */
+
+        const gpa =
+            Number(
+                prediction.predicted_gpa
+            );
+
+
+        const overall =
+            document.getElementById(
+                "overallRecommendation"
+            );
+
+
+        if (gpa >= 3.5) {
+
+            overall.textContent =
+                "The model predicts strong academic performance. The main priority should be maintaining the current study and attendance pattern.";
+
+        } else if (gpa >= 3.0) {
+
+            overall.textContent =
+                "The student shows a positive predicted performance. Focus on consistency in study habits and attendance to maintain or improve the predicted outcome.";
+
+        } else if (gpa >= 2.0) {
+
+            overall.textContent =
+                "The prediction suggests room for improvement. Prioritize consistent study time, attendance, and appropriate academic support.";
+
+        } else {
+
+            overall.textContent =
+                "The prediction indicates a higher level of academic concern. Strong attention to study consistency, attendance, and academic support is recommended.";
+
+        }
+
+    }
+
+
+    /* =========================================================
+       RENDER PROBABILITIES
+    ========================================================= */
+
+    function renderProbabilities(
+        probabilities
+    ) {
+
+        const container =
+            document.getElementById(
+                "probabilityList"
+            );
+
+
+        container.innerHTML = "";
+
+
+        if (
+            !probabilities ||
+            typeof probabilities !==
+                "object"
+        ) {
+
+            document.getElementById(
+                "probabilities"
+            ).style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "probabilities"
+        ).style.display =
+            "block";
+
+
+        Object.entries(
+            probabilities
+        ).forEach(
+            ([gradeClass, probability]) => {
+
+                const numeric =
+                    Number(
+                        probability
+                    );
+
+
+                const percentage =
+                    numeric <= 1
+                        ? numeric * 100
+                        : numeric;
+
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+                row.className =
+                    "probability-row";
+
+
+                row.innerHTML = `
+
+                    <div
+                        class="probability-top"
+                    >
+
+                        <span>
+                            Class ${gradeClass}
+                        </span>
+
+                        <strong>
+                            ${percentage.toFixed(1)}%
+                        </strong>
+
+                    </div>
+
+                    <div class="progress">
+
+                        <div
+                            class="progress-bar"
+                            style="
+                                width:
+                                ${Math.min(
+                                    100,
+                                    Math.max(
+                                        0,
+                                        percentage
+                                    )
+                                )}%;
+                            "
+                        ></div>
+
+                    </div>
+
+                `;
+
+
+                container.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       SUBMIT
+    ========================================================= */
+
+    form.addEventListener(
+        "submit",
+        async event => {
+
+            event.preventDefault();
+
+
+            errorBox.style.display =
+                "none";
+
+
+            loading.style.display =
+                "flex";
+
+
+            const student =
+                getFormData();
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/predict",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    student
+                                )
+
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
+
+                    throw new Error(
+                        data.error ||
+                        "Prediction failed."
+                    );
+
+                }
+
+
+                const prediction =
+                    data.prediction ||
+                    data;
+
+
+                /* =================================
+                   GPA
+                ================================= */
+
+                const predictedGPA =
+                    Number(
+                        prediction.predicted_gpa
+                    );
+
+
+                document.getElementById(
+                    "predictedGPA"
+                ).textContent =
+                    Number.isFinite(
+                        predictedGPA
+                    )
+                        ? predictedGPA.toFixed(2)
+                        : "--";
+
+
+                /* =================================
+                   GRADE CLASS
+                ================================= */
+
+                const gradeClass =
+                    prediction.grade_class;
+
+
+                document.getElementById(
+                    "predictedClass"
+                ).textContent =
+                    `Grade Class ${gradeClass}`;
+
+
+                /* =================================
+                   PERFORMANCE
+                ================================= */
+
+                document.getElementById(
+                    "performanceCategory"
+                ).textContent =
+                    prediction.performance_category ||
+                    prediction.performance ||
+                    "Unknown";
+
+
+                /* =================================
+                   MODEL STATUS
+                ================================= */
+
+                document.getElementById(
+                    "modelStatus"
+                ).textContent =
+                    "Active";
+
+
+                /* =================================
+                   ADVISOR
+                ================================= */
+
+                renderAdvisor(
+                    student,
+                    prediction
+                );
+
+
+                /* =================================
+                   PROBABILITIES
+                ================================= */
+
+                renderProbabilities(
+                    prediction.probabilities ||
+                    prediction.class_probabilities
+                );
+
+
+                /* =================================
+                   SHOW RESULT
+                ================================= */
+
+                resultPanel.style.display =
+                    "block";
+
+
+                resultPanel.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Prediction error:",
+                    error
+                );
+
+
+                errorBox.textContent =
+                    "❌ " +
+                    error.message;
+
+
+                errorBox.style.display =
+                    "block";
+
+            }
+
+            finally {
+
+                loading.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    resetButton.addEventListener(
+        "click",
+        () => {
+
+            form.reset();
+
+
+            resultPanel.style.display =
+                "none";
+
+
+            errorBox.style.display =
+                "none";
+
+
+            document.getElementById(
+                "recommendations"
+            ).innerHTML = "";
+
+
+            document.getElementById(
+                "probabilityList"
+            ).innerHTML = "";
+
+        }
+    );
+
+</script>
+
+
+</body>
+
+</html>

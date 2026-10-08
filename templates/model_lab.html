@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Model Lab | Academic Performance Analytics</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header p {
+            margin-top: 6px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: white;
+            padding: 15px 35px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: #2563eb;
+        }
+
+        .container {
+            max-width: 1450px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .intro,
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 25px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .intro h2 {
+            margin-bottom: 8px;
+        }
+
+        .intro p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .best-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .best-box {
+            padding: 22px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        .best-box h3 {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .best-model {
+            font-size: 24px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .metric {
+            margin-top: 8px;
+            color: #475569;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 950px;
+        }
+
+        th {
+            background: #f8fafc;
+            padding: 13px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .best-row {
+            background: #eff6ff;
+            font-weight: 600;
+        }
+
+        .importance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        .importance-item {
+            margin-bottom: 14px;
+        }
+
+        .importance-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .importance-bar {
+            height: 11px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .importance-fill {
+            height: 100%;
+            background: #2563eb;
+            border-radius: 10px;
+        }
+
+        .matrix-wrapper {
+            overflow-x: auto;
+            margin-top: 18px;
+        }
+
+        .matrix {
+            border-collapse: collapse;
+            margin: auto;
+        }
+
+        .matrix th,
+        .matrix td {
+            border: 1px solid #d1d5db;
+            min-width: 65px;
+            height: 50px;
+            text-align: center;
+        }
+
+        .matrix th {
+            background: #f8fafc;
+        }
+
+        .matrix td {
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .error {
+            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 5px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .note {
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 15px;
+            border-radius: 8px;
+            color: #9a3412;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 11px 18px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .button:hover {
+            background: #1d4ed8;
+        }
+
+        @media (max-width: 900px) {
+            .best-grid,
+            .importance-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🤖 Academic Performance Analytics</h1>
+    <p>Machine Learning Model Laboratory</p>
+</header>
+
+<nav>
+
+    <a href="/">🏠 Dashboard</a>
+
+    <a href="/students">👨‍🎓 Student Records</a>
+
+    <a href="/add-student">➕ Add Student</a>
+
+    <a href="/model-lab">🧪 Model Lab</a>
+
+    <a href="/predict">🔮 Predict Student</a>
+
+    <a href="/what-if">🎯 What-If Analysis</a>
+
+    <a href="/retrain">🔄 Retrain Models</a>
+
+</nav>
+
+<div class="container">
+
+    <div class="intro">
+
+        <h2>🧪 Model Laboratory</h2>
+
+        <p>
+            Compare the machine-learning models used for Grade Class
+            classification and GPA regression. The laboratory also
+            displays cross-validation results, feature importance,
+            and the confusion matrix of the selected classifier.
+        </p>
+
+    </div>
+
+
+    <div id="error" class="error"></div>
+
+
+    <div id="loading" class="loading">
+
+        ⏳ Loading model evaluation results...
+
+    </div>
+
+
+    <div id="content" style="display:none;">
+
+
+        <!-- =================================================
+             BEST MODELS
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>🏆 Best Models</h2>
+
+            <div class="best-grid">
+
+                <div class="best-box">
+
+                    <h3>
+                        Grade Class Classification
+                    </h3>
+
+                    <div
+                        class="best-model"
+                        id="bestClassifier">
+                        -
+                    </div>
+
+                    <div class="metric">
+                        CV Accuracy:
+                        <strong id="bestClassifierAccuracy">
+                            -
+                        </strong>
+                    </div>
+
+                    <div class="metric">
+                        CV Macro F1:
+                        <strong id="bestClassifierF1">
+                            -
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="best-box">
+
+                    <h3>
+                        GPA Regression
+                    </h3>
+
+                    <div
+                        class="best-model"
+                        id="bestRegressor">
+                        -
+                    </div>
+
+                    <div class="metric">
+                        CV RMSE:
+                        <strong id="bestRegressorRMSE">
+                            -
+                        </strong>
+                    </div>
+
+                    <div class="metric">
+                        CV R²:
+                        <strong id="bestRegressorR2">
+                            -
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CLASSIFICATION
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>
+                🎯 Classification Model Comparison
+            </h2>
+
+            <p style="
+                color:#64748b;
+                margin-top:8px;
+            ">
+                GradeClass prediction using the 12 approved
+                demographic and behavioral features.
+            </p>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Model</th>
+
+                            <th>CV Accuracy</th>
+
+                            <th>CV Std</th>
+
+                            <th>CV Balanced Accuracy</th>
+
+                            <th>CV Macro F1</th>
+
+                            <th>Train Accuracy</th>
+
+                            <th>Train Macro Precision</th>
+
+                            <th>Train Macro Recall</th>
+
+                            <th>Train Macro F1</th>
+
+                            <th>Weighted F1</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="classificationBody">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             REGRESSION
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>
+                📈 GPA Regression Model Comparison
+            </h2>
+
+            <p style="
+                color:#64748b;
+                margin-top:8px;
+            ">
+                GPA prediction using the same 12 approved features.
+            </p>
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Model</th>
+
+                            <th>CV MAE</th>
+
+                            <th>CV RMSE</th>
+
+                            <th>CV R²</th>
+
+                            <th>Train MAE</th>
+
+                            <th>Train MSE</th>
+
+                            <th>Train RMSE</th>
+
+                            <th>Train R²</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="regressionBody">
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             FEATURE IMPORTANCE
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>
+                🔍 Feature Importance
+            </h2>
+
+            <p style="
+                color:#64748b;
+                margin-top:8px;
+                margin-bottom:18px;
+            ">
+                Relative importance of the input features for
+                the selected classification model.
+            </p>
+
+            <div
+                id="importanceContainer">
+            </div>
+
+            <div class="note" style="margin-top:20px;">
+
+                ⚠️ Feature importance indicates how useful a
+                feature was to the trained model. It does not
+                prove that the feature causes academic performance.
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CONFUSION MATRIX
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>
+                🧩 Classification Confusion Matrix
+            </h2>
+
+            <p style="
+                color:#64748b;
+                margin-top:8px;
+            ">
+                Actual Grade Class versus predicted Grade Class
+                for the selected classification model.
+            </p>
+
+            <div
+                class="matrix-wrapper"
+                id="matrixContainer">
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PROJECT INFORMATION
+             ================================================= -->
+
+        <div class="card">
+
+            <h2>
+                🔐 Data Leakage Protection
+            </h2>
+
+            <div class="note">
+
+                <strong>StudentID:</strong>
+                Identifier only and excluded from model features.
+
+                <br><br>
+
+                <strong>Actual GPA:</strong>
+                Never used as an input feature when predicting
+                GradeClass.
+
+                <br><br>
+
+                <strong>Model inputs:</strong>
+                Age, Gender, Ethnicity, ParentalEducation,
+                StudyTimeWeekly, Absences, Tutoring,
+                ParentalSupport, Extracurricular, Sports,
+                Music and Volunteering.
+
+            </div>
+
+            <div class="buttons">
+
+                <a
+                    href="/predict"
+                    class="button">
+
+                    🔮 Try Prediction
+
+                </a>
+
+                <a
+                    href="/what-if"
+                    class="button">
+
+                    🎯 Try What-If
+
+                </a>
+
+                <a
+                    href="/retrain"
+                    class="button">
+
+                    🔄 Retrain Models
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+function formatNumber(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === "-"
+    ) {
+        return "-";
+    }
+
+    return Number(value).toFixed(4);
+
+}
+
+
+function findValue(object, names) {
+
+    for (
+        const name of names
+    ) {
+
+        if (
+            object &&
+            object[name] !== undefined
+        ) {
+
+            return object[name];
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+function getModelsContainer(
+    results,
+    type
+) {
+
+    if (!results) {
+        return {};
+    }
+
+    if (
+        type === "classification"
+    ) {
+
+        return (
+            results.classification_models ||
+            results.classification ||
+            {}
+        );
+
+    }
+
+    return (
+        results.regression_models ||
+        results.regression ||
+        {}
+    );
+
+}
+
+
+function createClassificationTable(
+    results
+) {
+
+    const body =
+        document.getElementById(
+            "classificationBody"
+        );
+
+    body.innerHTML = "";
+
+
+    const models =
+        getModelsContainer(
+            results,
+            "classification"
+        );
+
+
+    const best =
+        results.best_classification_model ||
+        results.best_classifier ||
+        "";
+
+
+    Object.entries(models)
+        .forEach(
+            ([name, metrics]) => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                if (
+                    name === best
+                ) {
+
+                    row.className =
+                        "best-row";
+
+                }
+
+
+                const cvAccuracy =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_accuracy",
+                            "CV Accuracy"
+                        ]
+                    );
+
+
+                const cvStd =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_accuracy_std",
+                            "cv_std",
+                            "CV Std"
+                        ]
+                    );
+
+
+                const cvBalanced =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_balanced_accuracy",
+                            "CV Balanced Accuracy"
+                        ]
+                    );
+
+
+                const cvMacroF1 =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_macro_f1",
+                            "CV Macro F1"
+                        ]
+                    );
+
+
+                const trainAccuracy =
+                    findValue(
+                        metrics,
+                        [
+                            "accuracy",
+                            "train_accuracy",
+                            "Accuracy"
+                        ]
+                    );
+
+
+                const precision =
+                    findValue(
+                        metrics,
+                        [
+                            "macro_precision",
+                            "train_macro_precision"
+                        ]
+                    );
+
+
+                const recall =
+                    findValue(
+                        metrics,
+                        [
+                            "macro_recall",
+                            "train_macro_recall"
+                        ]
+                    );
+
+
+                const macroF1 =
+                    findValue(
+                        metrics,
+                        [
+                            "macro_f1",
+                            "train_macro_f1"
+                        ]
+                    );
+
+
+                const weightedF1 =
+                    findValue(
+                        metrics,
+                        [
+                            "weighted_f1",
+                            "train_weighted_f1"
+                        ]
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+                        <strong>
+                            ${name}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvAccuracy)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvStd)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvBalanced)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvMacroF1)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(trainAccuracy)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(precision)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(recall)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(macroF1)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(weightedF1)}
+                    </td>
+
+                `;
+
+
+                body.appendChild(row);
+
+            }
+        );
+
+}
+
+
+function createRegressionTable(
+    results
+) {
+
+    const body =
+        document.getElementById(
+            "regressionBody"
+        );
+
+    body.innerHTML = "";
+
+
+    const models =
+        getModelsContainer(
+            results,
+            "regression"
+        );
+
+
+    const best =
+        results.best_regression_model ||
+        results.best_regressor ||
+        "";
+
+
+    Object.entries(models)
+        .forEach(
+            ([name, metrics]) => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                if (
+                    name === best
+                ) {
+
+                    row.className =
+                        "best-row";
+
+                }
+
+
+                const cvMAE =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_mae",
+                            "CV MAE"
+                        ]
+                    );
+
+
+                const cvRMSE =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_rmse",
+                            "CV RMSE"
+                        ]
+                    );
+
+
+                const cvR2 =
+                    findValue(
+                        metrics,
+                        [
+                            "cv_r2",
+                            "CV R²"
+                        ]
+                    );
+
+
+                const trainMAE =
+                    findValue(
+                        metrics,
+                        [
+                            "mae",
+                            "train_mae"
+                        ]
+                    );
+
+
+                const trainMSE =
+                    findValue(
+                        metrics,
+                        [
+                            "mse",
+                            "train_mse"
+                        ]
+                    );
+
+
+                const trainRMSE =
+                    findValue(
+                        metrics,
+                        [
+                            "rmse",
+                            "train_rmse"
+                        ]
+                    );
+
+
+                const trainR2 =
+                    findValue(
+                        metrics,
+                        [
+                            "r2",
+                            "train_r2"
+                        ]
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+                        <strong>
+                            ${name}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvMAE)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvRMSE)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(cvR2)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(trainMAE)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(trainMSE)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(trainRMSE)}
+                    </td>
+
+                    <td>
+                        ${formatNumber(trainR2)}
+                    </td>
+
+                `;
+
+
+                body.appendChild(row);
+
+            }
+        );
+
+}
+
+
+function createFeatureImportance(
+    results
+) {
+
+    const container =
+        document.getElementById(
+            "importanceContainer"
+        );
+
+    container.innerHTML = "";
+
+
+    const importance =
+        results.feature_importance ||
+        results.feature_importances ||
+        {};
+
+
+    let entries = [];
+
+
+    if (
+        Array.isArray(importance)
+    ) {
+
+        entries =
+            importance.map(
+                item => {
+
+                    return [
+
+                        item.feature ||
+                        item.name,
+
+                        item.importance ||
+                        item.value ||
+                        0
+
+                    ];
+
+                }
+            );
+
+    }
+
+    else {
+
+        entries =
+            Object.entries(
+                importance
+            );
+
+    }
+
+
+    entries.sort(
+        (a, b) =>
+            Number(b[1]) -
+            Number(a[1])
+    );
+
+
+    if (
+        entries.length === 0
+    ) {
+
+        container.innerHTML =
+            "<p>No feature importance data available.</p>";
+
+        return;
+
+    }
+
+
+    const maxValue =
+        Math.max(
+            ...entries.map(
+                item =>
+                    Number(item[1])
+            )
+        );
+
+
+    entries.forEach(
+        ([feature, value]) => {
+
+            const numericValue =
+                Number(value);
+
+
+            const percentage =
+                maxValue > 0
+                    ? (
+                        numericValue /
+                        maxValue
+                    ) * 100
+                    : 0;
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+            item.className =
+                "importance-item";
+
+
+            item.innerHTML = `
+
+                <div class="importance-header">
+
+                    <span>
+                        ${feature}
+                    </span>
+
+                    <strong>
+                        ${numericValue.toFixed(4)}
+                    </strong>
+
+                </div>
+
+                <div class="importance-bar">
+
+                    <div
+                        class="importance-fill"
+                        style="width:${percentage}%">
+                    </div>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(item);
+
+        }
+    );
+
+}
+
+
+function createConfusionMatrix(
+    results
+) {
+
+    const container =
+        document.getElementById(
+            "matrixContainer"
+        );
+
+
+    const matrix =
+        results.confusion_matrix;
+
+
+    const labels =
+        results.confusion_matrix_labels ||
+        results.class_labels ||
+        ["0", "1", "2", "3", "4"];
+
+
+    if (
+        !matrix ||
+        !Array.isArray(matrix)
+    ) {
+
+        container.innerHTML =
+            "<p>No confusion matrix data available.</p>";
+
+        return;
+
+    }
+
+
+    let html = `
+
+        <table class="matrix">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Actual ↓ / Predicted →
+                    </th>
+
+    `;
+
+
+    labels.forEach(
+        label => {
+
+            html += `
+                <th>
+                    ${label}
+                </th>
+            `;
+
+        }
+    );
+
+
+    html += `
+            </tr>
+        </thead>
+
+        <tbody>
+    `;
+
+
+    matrix.forEach(
+        (row, index) => {
+
+            html += `
+
+                <tr>
+
+                    <th>
+                        ${labels[index] || index}
+                    </th>
+
+            `;
+
+
+            row.forEach(
+                value => {
+
+                    html += `
+
+                        <td>
+                            ${value}
+                        </td>
+
+                    `;
+
+                }
+            );
+
+
+            html += `
+                </tr>
+            `;
+
+        }
+    );
+
+
+    html += `
+
+        </tbody>
+
+    </table>
+
+    `;
+
+
+    container.innerHTML =
+        html;
+
+}
+
+
+async function loadModelLab() {
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+    const content =
+        document.getElementById(
+            "content"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "error"
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/model-lab"
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Unable to load model results."
+            );
+
+        }
+
+
+        loading.style.display =
+            "none";
+
+
+        content.style.display =
+            "block";
+
+
+        // ====================================================
+        // BEST CLASSIFIER
+        // ====================================================
+
+        const bestClassifier =
+            data.best_classification_model ||
+            data.best_classifier ||
+            "-";
+
+
+        const bestRegressor =
+            data.best_regression_model ||
+            data.best_regressor ||
+            "-";
+
+
+        document.getElementById(
+            "bestClassifier"
+        ).textContent =
+            bestClassifier;
+
+
+        document.getElementById(
+            "bestRegressor"
+        ).textContent =
+            bestRegressor;
+
+
+        const classificationModels =
+            getModelsContainer(
+                data,
+                "classification"
+            );
+
+
+        const regressionModels =
+            getModelsContainer(
+                data,
+                "regression"
+            );
+
+
+        const classifierMetrics =
+            classificationModels[
+                bestClassifier
+            ] || {};
+
+
+        const regressorMetrics =
+            regressionModels[
+                bestRegressor
+            ] || {};
+
+
+        document.getElementById(
+            "bestClassifierAccuracy"
+        ).textContent =
+            formatNumber(
+                findValue(
+                    classifierMetrics,
+                    ["cv_accuracy"]
+                )
+            );
+
+
+        document.getElementById(
+            "bestClassifierF1"
+        ).textContent =
+            formatNumber(
+                findValue(
+                    classifierMetrics,
+                    ["cv_macro_f1"]
+                )
+            );
+
+
+        document.getElementById(
+            "bestRegressorRMSE"
+        ).textContent =
+            formatNumber(
+                findValue(
+                    regressorMetrics,
+                    ["cv_rmse"]
+                )
+            );
+
+
+        document.getElementById(
+            "bestRegressorR2"
+        ).textContent =
+            formatNumber(
+                findValue(
+                    regressorMetrics,
+                    ["cv_r2"]
+                )
+            );
+
+
+        createClassificationTable(
+            data
+        );
+
+
+        createRegressionTable(
+            data
+        );
+
+
+        createFeatureImportance(
+            data
+        );
+
+
+        createConfusionMatrix(
+            data
+        );
+
+    }
+
+    catch (error) {
+
+        loading.style.display =
+            "none";
+
+        errorBox.textContent =
+            "❌ " + error.message;
+
+        errorBox.style.display =
+            "block";
+
+    }
+
+}
+
+
+loadModelLab();
+
+</script>
+
+</body>
+</html>

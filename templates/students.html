@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Records | Academic Performance Analytics</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header p {
+            margin-top: 6px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: white;
+            padding: 15px 35px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: #2563eb;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 22px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns:
+                repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input,
+        select {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .primary:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .secondary:hover {
+            background: #d1d5db;
+        }
+
+        .download {
+            background: #15803d;
+            color: white;
+        }
+
+        .download:hover {
+            background: #166534;
+        }
+
+        .count {
+            margin-bottom: 15px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #374151;
+            font-size: 13px;
+            padding: 13px 10px;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 11px 10px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            min-width: 28px;
+            padding: 5px 8px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .grade-0 {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .grade-1 {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .grade-2 {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .grade-3 {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .grade-4 {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 35px;
+            color: #64748b;
+        }
+
+        .error {
+            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 5px solid #ef4444;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 900px) {
+            .filters {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>🎓 Academic Performance Analytics</h1>
+
+    <p>
+        Student Records Management
+    </p>
+
+</header>
+
+
+<nav>
+
+    <a href="/">
+        🏠 Dashboard
+    </a>
+
+    <a href="/students">
+        👨‍🎓 Student Records
+    </a>
+
+    <a href="/add-student">
+        ➕ Add Student
+    </a>
+
+    <a href="/model-lab">
+        🧪 Model Lab
+    </a>
+
+    <a href="/predict">
+        🔮 Predict Student
+    </a>
+
+    <a href="/what-if">
+        🎯 What-If Analysis
+    </a>
+
+    <a href="/retrain">
+        🔄 Retrain Models
+    </a>
+
+</nav>
+
+
+<div class="container">
+
+
+    <!-- =====================================================
+         FILTER CARD
+         ===================================================== -->
+
+    <div class="card">
+
+        <h2>
+            🔎 Search & Filter Students
+        </h2>
+
+        <p class="subtitle">
+            Search student records and filter the dataset
+            using academic and demographic information.
+        </p>
+
+
+        <div class="filters">
+
+
+            <div class="field">
+
+                <label>
+                    Student ID
+                </label>
+
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Enter Student ID"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Gender
+                </label>
+
+                <select id="gender">
+
+                    <option value="">
+                        All
+                    </option>
+
+                    <option value="0">
+                        Male
+                    </option>
+
+                    <option value="1">
+                        Female
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Grade Class
+                </label>
+
+                <select id="grade_class">
+
+                    <option value="">
+                        All
+                    </option>
+
+                    <option value="0">
+                        Grade Class 0
+                    </option>
+
+                    <option value="1">
+                        Grade Class 1
+                    </option>
+
+                    <option value="2">
+                        Grade Class 2
+                    </option>
+
+                    <option value="3">
+                        Grade Class 3
+                    </option>
+
+                    <option value="4">
+                        Grade Class 4
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Tutoring
+                </label>
+
+                <select id="tutoring">
+
+                    <option value="">
+                        All
+                    </option>
+
+                    <option value="0">
+                        No
+                    </option>
+
+                    <option value="1">
+                        Yes
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Minimum GPA
+                </label>
+
+                <input
+                    type="number"
+                    id="min_gpa"
+                    min="0"
+                    max="4"
+                    step="0.1"
+                    placeholder="0.0"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Maximum GPA
+                </label>
+
+                <input
+                    type="number"
+                    id="max_gpa"
+                    min="0"
+                    max="4"
+                    step="0.1"
+                    placeholder="4.0"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Maximum Absences
+                </label>
+
+                <input
+                    type="number"
+                    id="max_absences"
+                    min="0"
+                    placeholder="Example: 10"
+                >
+
+            </div>
+
+
+        </div>
+
+
+        <div class="button-row">
+
+            <button
+                class="primary"
+                onclick="loadStudents()">
+
+                🔎 Apply Filters
+
+            </button>
+
+
+            <button
+                class="secondary"
+                onclick="clearFilters()">
+
+                ✖ Clear Filters
+
+            </button>
+
+
+            <button
+                class="download"
+                onclick="downloadStudents()">
+
+                📥 Download CSV
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         STUDENT TABLE
+         ===================================================== -->
+
+    <div class="card">
+
+        <h2>
+            👨‍🎓 Student Dataset
+        </h2>
+
+        <p
+            class="count"
+            id="studentCount">
+
+            Loading students...
+
+        </p>
+
+
+        <div
+            id="error"
+            class="error">
+        </div>
+
+
+        <div
+            id="loading"
+            class="loading">
+
+            ⏳ Loading student records...
+
+        </div>
+
+
+        <div
+            id="tableContainer"
+            class="table-wrapper"
+            style="display:none;">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Student ID</th>
+
+                        <th>Age</th>
+
+                        <th>Gender</th>
+
+                        <th>Ethnicity</th>
+
+                        <th>Parental Education</th>
+
+                        <th>Study Time Weekly</th>
+
+                        <th>Absences</th>
+
+                        <th>Tutoring</th>
+
+                        <th>Parental Support</th>
+
+                        <th>Extracurricular</th>
+
+                        <th>Sports</th>
+
+                        <th>Music</th>
+
+                        <th>Volunteering</th>
+
+                        <th>GPA</th>
+
+                        <th>Grade Class</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="studentTableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div
+            id="empty"
+            class="empty"
+            style="display:none;">
+
+            🔍 No students match the selected filters.
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+function getFilterParameters() {
+
+    const params =
+        new URLSearchParams();
+
+
+    const search =
+        document.getElementById(
+            "search"
+        ).value.trim();
+
+    const gender =
+        document.getElementById(
+            "gender"
+        ).value;
+
+    const gradeClass =
+        document.getElementById(
+            "grade_class"
+        ).value;
+
+    const tutoring =
+        document.getElementById(
+            "tutoring"
+        ).value;
+
+    const minGPA =
+        document.getElementById(
+            "min_gpa"
+        ).value;
+
+    const maxGPA =
+        document.getElementById(
+            "max_gpa"
+        ).value;
+
+    const maxAbsences =
+        document.getElementById(
+            "max_absences"
+        ).value;
+
+
+    if (search) {
+        params.set(
+            "search",
+            search
+        );
+    }
+
+    if (gender) {
+        params.set(
+            "gender",
+            gender
+        );
+    }
+
+    if (gradeClass) {
+        params.set(
+            "grade_class",
+            gradeClass
+        );
+    }
+
+    if (tutoring) {
+        params.set(
+            "tutoring",
+            tutoring
+        );
+    }
+
+    if (minGPA) {
+        params.set(
+            "min_gpa",
+            minGPA
+        );
+    }
+
+    if (maxGPA) {
+        params.set(
+            "max_gpa",
+            maxGPA
+        );
+    }
+
+    if (maxAbsences) {
+        params.set(
+            "max_absences",
+            maxAbsences
+        );
+    }
+
+
+    return params;
+}
+
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+function genderText(value) {
+
+    return Number(value) === 1
+        ? "Female"
+        : "Male";
+}
+
+
+function yesNo(value) {
+
+    return Number(value) === 1
+        ? "Yes"
+        : "No";
+}
+
+
+function gradeBadge(value) {
+
+    const grade =
+        Number(value);
+
+    return `
+        <span class="grade-badge grade-${grade}">
+            ${escapeHTML(value)}
+        </span>
+    `;
+}
+
+
+async function loadStudents() {
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+    const tableContainer =
+        document.getElementById(
+            "tableContainer"
+        );
+
+    const empty =
+        document.getElementById(
+            "empty"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "error"
+        );
+
+    const tbody =
+        document.getElementById(
+            "studentTableBody"
+        );
+
+    loading.style.display =
+        "block";
+
+    tableContainer.style.display =
+        "none";
+
+    empty.style.display =
+        "none";
+
+    errorBox.style.display =
+        "none";
+
+    tbody.innerHTML = "";
+
+
+    try {
+
+        const params =
+            getFilterParameters();
+
+
+        const response =
+            await fetch(
+                "/api/students?" +
+                params.toString()
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Unable to load students."
+            );
+
+        }
+
+
+        loading.style.display =
+            "none";
+
+
+        document.getElementById(
+            "studentCount"
+        ).textContent =
+            `${data.count} student record(s) found`;
+
+
+        if (
+            !data.students ||
+            data.students.length === 0
+        ) {
+
+            empty.style.display =
+                "block";
+
+            return;
+
+        }
+
+
+        data.students.forEach(
+            student => {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${escapeHTML(
+                            student.StudentID
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            student.Age
+                        )}
+                    </td>
+
+                    <td>
+                        ${genderText(
+                            student.Gender
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            student.Ethnicity
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            student.ParentalEducation
+                        )}
+                    </td>
+
+                    <td>
+                        ${Number(
+                            student.StudyTimeWeekly
+                        ).toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            student.Absences
+                        )}
+                    </td>
+
+                    <td>
+                        ${yesNo(
+                            student.Tutoring
+                        )}
+                    </td>
+
+                    <td>
+                        ${escapeHTML(
+                            student.ParentalSupport
+                        )}
+                    </td>
+
+                    <td>
+                        ${yesNo(
+                            student.Extracurricular
+                        )}
+                    </td>
+
+                    <td>
+                        ${yesNo(
+                            student.Sports
+                        )}
+                    </td>
+
+                    <td>
+                        ${yesNo(
+                            student.Music
+                        )}
+                    </td>
+
+                    <td>
+                        ${yesNo(
+                            student.Volunteering
+                        )}
+                    </td>
+
+                    <td>
+                        ${Number(
+                            student.GPA
+                        ).toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${gradeBadge(
+                            student.GradeClass
+                        )}
+                    </td>
+
+                `;
+
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+
+        tableContainer.style.display =
+            "block";
+
+    }
+
+    catch (error) {
+
+        loading.style.display =
+            "none";
+
+        errorBox.textContent =
+            "❌ " + error.message;
+
+        errorBox.style.display =
+            "block";
+
+    }
+
+}
+
+
+function clearFilters() {
+
+    document.getElementById(
+        "search"
+    ).value = "";
+
+    document.getElementById(
+        "gender"
+    ).value = "";
+
+    document.getElementById(
+        "grade_class"
+    ).value = "";
+
+    document.getElementById(
+        "tutoring"
+    ).value = "";
+
+    document.getElementById(
+        "min_gpa"
+    ).value = "";
+
+    document.getElementById(
+        "max_gpa"
+    ).value = "";
+
+    document.getElementById(
+        "max_absences"
+    ).value = "";
+
+
+    loadStudents();
+
+}
+
+
+function downloadStudents() {
+
+    const params =
+        getFilterParameters();
+
+
+    const url =
+        "/api/students/download?" +
+        params.toString();
+
+
+    window.location.href =
+        url;
+
+}
+
+
+loadStudents();
+
+</script>
+
+</body>
+</html>

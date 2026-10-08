@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What-If Analysis | Academic Performance Analytics</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 35px;
+        }
+
+        header h1 {
+            font-size: 26px;
+        }
+
+        header p {
+            margin-top: 6px;
+            color: #cbd5e1;
+        }
+
+        nav {
+            background: white;
+            padding: 14px 35px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #374151;
+            margin-right: 22px;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            color: #2563eb;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .intro {
+            background: white;
+            padding: 24px;
+            border-radius: 14px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .intro h2 {
+            margin-bottom: 8px;
+        }
+
+        .intro p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        .card h2 {
+            margin-bottom: 18px;
+            color: #111827;
+        }
+
+        .section-title {
+            margin: 22px 0 12px;
+            font-size: 16px;
+            color: #374151;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input,
+        select {
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .scenario-note {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 12px;
+            margin-top: 15px;
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .button-area {
+            margin-top: 22px;
+            text-align: center;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #loading {
+            display: none;
+            margin-top: 15px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        #error {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-radius: 8px;
+        }
+
+        #results {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .result-box {
+            padding: 20px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        .result-box h3 {
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-value {
+            font-weight: bold;
+        }
+
+        .change-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .change-positive {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .change-negative {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            height: 350px;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            background: #fff7ed;
+            border-left: 4px solid #f97316;
+            padding: 14px;
+            color: #9a3412;
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .grid,
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                line-height: 2;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>🎯 Academic Performance Analytics</h1>
+    <p>What-If Student Performance Analysis</p>
+</header>
+
+<nav>
+    <a href="/">Dashboard</a>
+    <a href="/students">Student Records</a>
+    <a href="/add-student">Add Student</a>
+    <a href="/model-lab">Model Lab</a>
+    <a href="/predict">Predict Student</a>
+    <a href="/what-if">What-If Analysis</a>
+</nav>
+
+<div class="container">
+
+    <div class="intro">
+        <h2>🔬 What-If Analysis</h2>
+        <p>
+            Compare a student's current situation with a hypothetical scenario.
+            Change study time, absences, tutoring, parental support, and activities
+            to see how the trained machine-learning models respond.
+        </p>
+    </div>
+
+    <div class="grid">
+
+        <!-- BASELINE -->
+        <div class="card">
+            <h2>👤 Baseline Student</h2>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Age</label>
+                    <input type="number" id="base_Age" value="17" min="10" max="30">
+                </div>
+
+                <div class="field">
+                    <label>Gender</label>
+                    <select id="base_Gender">
+                        <option value="0">Male</option>
+                        <option value="1">Female</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Ethnicity</label>
+                    <input type="number" id="base_Ethnicity" value="0">
+                </div>
+
+                <div class="field">
+                    <label>Parental Education</label>
+                    <input type="number" id="base_ParentalEducation" value="2">
+                </div>
+
+                <div class="field">
+                    <label>Study Time Weekly</label>
+                    <input type="number" id="base_StudyTimeWeekly"
+                           value="10" min="0" step="0.1">
+                </div>
+
+                <div class="field">
+                    <label>Absences</label>
+                    <input type="number" id="base_Absences"
+                           value="5" min="0">
+                </div>
+
+                <div class="field">
+                    <label>Tutoring</label>
+                    <select id="base_Tutoring">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Parental Support</label>
+                    <input type="number" id="base_ParentalSupport"
+                           value="2">
+                </div>
+
+                <div class="field">
+                    <label>Extracurricular</label>
+                    <select id="base_Extracurricular">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Sports</label>
+                    <select id="base_Sports">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Music</label>
+                    <select id="base_Music">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Volunteering</label>
+                    <select id="base_Volunteering">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- SCENARIO -->
+        <div class="card">
+            <h2>🧪 What-If Scenario</h2>
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label>Age</label>
+                    <input type="number" id="scenario_Age" value="17">
+                </div>
+
+                <div class="field">
+                    <label>Gender</label>
+                    <select id="scenario_Gender">
+                        <option value="0">Male</option>
+                        <option value="1">Female</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Ethnicity</label>
+                    <input type="number" id="scenario_Ethnicity" value="0">
+                </div>
+
+                <div class="field">
+                    <label>Parental Education</label>
+                    <input type="number" id="scenario_ParentalEducation" value="2">
+                </div>
+
+                <div class="field">
+                    <label>Study Time Weekly</label>
+                    <input type="number" id="scenario_StudyTimeWeekly"
+                           value="15" min="0" step="0.1">
+                </div>
+
+                <div class="field">
+                    <label>Absences</label>
+                    <input type="number" id="scenario_Absences"
+                           value="2" min="0">
+                </div>
+
+                <div class="field">
+                    <label>Tutoring</label>
+                    <select id="scenario_Tutoring">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Parental Support</label>
+                    <input type="number" id="scenario_ParentalSupport"
+                           value="3">
+                </div>
+
+                <div class="field">
+                    <label>Extracurricular</label>
+                    <select id="scenario_Extracurricular">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Sports</label>
+                    <select id="scenario_Sports">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Music</label>
+                    <select id="scenario_Music">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Volunteering</label>
+                    <select id="scenario_Volunteering">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="scenario-note">
+                💡 Change the scenario values to represent a hypothetical
+                situation and compare it with the baseline student.
+            </div>
+
+            <div class="button-area">
+                <button onclick="runAnalysis()">
+                    🔍 Run What-If Analysis
+                </button>
+            </div>
+
+            <div id="loading">
+                ⏳ Running machine-learning models...
+            </div>
+
+            <div id="error"></div>
+        </div>
+
+    </div>
+
+
+    <!-- RESULTS -->
+    <div id="results">
+
+        <div class="card">
+
+            <h2>📊 Analysis Results</h2>
+
+            <div class="result-grid">
+
+                <div class="result-box">
+                    <h3>👤 Baseline Prediction</h3>
+
+                    <div class="metric">
+                        <span>Predicted GPA</span>
+                        <span class="metric-value" id="baselineGPA">-</span>
+                    </div>
+
+                    <div class="metric">
+                        <span>Grade Class</span>
+                        <span class="metric-value" id="baselineClass">-</span>
+                    </div>
+
+                    <div class="metric">
+                        <span>Performance</span>
+                        <span class="metric-value" id="baselinePerformance">-</span>
+                    </div>
+                </div>
+
+
+                <div class="result-box">
+                    <h3>🧪 Scenario Prediction</h3>
+
+                    <div class="metric">
+                        <span>Predicted GPA</span>
+                        <span class="metric-value" id="scenarioGPA">-</span>
+                    </div>
+
+                    <div class="metric">
+                        <span>Grade Class</span>
+                        <span class="metric-value" id="scenarioClass">-</span>
+                    </div>
+
+                    <div class="metric">
+                        <span>Performance</span>
+                        <span class="metric-value" id="scenarioPerformance">-</span>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="change-box">
+
+                <h3>📈 Changes</h3>
+
+                <div class="metric">
+                    <span>GPA Change</span>
+                    <span id="gpaChange">-</span>
+                </div>
+
+                <div class="metric">
+                    <span>Grade Class Change</span>
+                    <span id="classChange">-</span>
+                </div>
+
+            </div>
+
+
+            <div class="card" style="box-shadow:none; padding:0;">
+
+                <h3 style="margin-bottom:15px;">
+                    📊 Baseline vs Scenario
+                </h3>
+
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <div class="disclaimer">
+                ⚠️ <strong>Important:</strong>
+                This analysis shows how the trained machine-learning model
+                responds to hypothetical input changes. It does not prove
+                that changing a particular factor will actually cause a
+                student's GPA or performance to change.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const FEATURES = [
+    "Age",
+    "Gender",
+    "Ethnicity",
+    "ParentalEducation",
+    "StudyTimeWeekly",
+    "Absences",
+    "Tutoring",
+    "ParentalSupport",
+    "Extracurricular",
+    "Sports",
+    "Music",
+    "Volunteering"
+];
+
+
+function getStudentData(prefix) {
+
+    const data = {};
+
+    FEATURES.forEach(feature => {
+
+        const element =
+            document.getElementById(prefix + "_" + feature);
+
+        let value = Number(element.value);
+
+        data[feature] = value;
+    });
+
+    return data;
+}
+
+
+function formatNumber(value) {
+
+    if (value === null || value === undefined) {
+        return "-";
+    }
+
+    return Number(value).toFixed(2);
+}
+
+
+async function runAnalysis() {
+
+    const loading = document.getElementById("loading");
+    const errorBox = document.getElementById("error");
+    const results = document.getElementById("results");
+
+    errorBox.style.display = "none";
+    results.style.display = "none";
+    loading.style.display = "block";
+
+    const baseline = getStudentData("base");
+    const scenario = getStudentData("scenario");
+
+    try {
+
+        const response = await fetch("/api/what-if", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                baseline: baseline,
+                scenario: scenario
+            })
+
+        });
+
+
+        const data = await response.json();
+
+        loading.style.display = "none";
+
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.error || "Unable to perform analysis."
+            );
+
+        }
+
+
+        const analysis = data.analysis;
+
+
+        // Baseline
+        document.getElementById("baselineGPA").textContent =
+            formatNumber(analysis.baseline.predicted_gpa);
+
+        document.getElementById("baselineClass").textContent =
+            analysis.baseline.grade_class;
+
+        document.getElementById("baselinePerformance").textContent =
+            analysis.baseline.performance_category;
+
+
+        // Scenario
+        document.getElementById("scenarioGPA").textContent =
+            formatNumber(analysis.scenario.predicted_gpa);
+
+        document.getElementById("scenarioClass").textContent =
+            analysis.scenario.grade_class;
+
+        document.getElementById("scenarioPerformance").textContent =
+            analysis.scenario.performance_category;
+
+
+        // GPA change
+        const gpaChange =
+            Number(analysis.gpa_change);
+
+        const gpaElement =
+            document.getElementById("gpaChange");
+
+        gpaElement.textContent =
+            (gpaChange >= 0 ? "+" : "") +
+            formatNumber(gpaChange);
+
+        gpaElement.className =
+            gpaChange >= 0
+                ? "change-positive"
+                : "change-negative";
+
+
+        // Class change
+        const classChange =
+            Number(analysis.grade_class_change);
+
+        const classElement =
+            document.getElementById("classChange");
+
+        classElement.textContent =
+            (classChange >= 0 ? "+" : "") +
+            classChange.toFixed(0);
+
+        classElement.className =
+            classChange >= 0
+                ? "change-positive"
+                : "change-negative";
+
+
+        results.style.display = "block";
+
+
+        createComparisonChart(
+            analysis.baseline.predicted_gpa,
+            analysis.scenario.predicted_gpa
+        );
+
+    }
+
+    catch (error) {
+
+        loading.style.display = "none";
+
+        errorBox.textContent =
+            "❌ " + error.message;
+
+        errorBox.style.display = "block";
+    }
+}
+
+
+let comparisonChart = null;
+
+
+function createComparisonChart(baselineGPA, scenarioGPA) {
+
+    const canvas =
+        document.getElementById("comparisonChart");
+
+    if (comparisonChart) {
+        comparisonChart.destroy();
+    }
+
+
+    comparisonChart = new Chart(canvas, {
+
+        type: "bar",
+
+        data: {
+
+            labels: [
+                "Baseline GPA",
+                "Scenario GPA"
+            ],
+
+            datasets: [{
+
+                label: "Predicted GPA",
+
+                data: [
+                    Number(baselineGPA),
+                    Number(scenarioGPA)
+                ]
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: true,
+
+                    max: 4,
+
+                    title: {
+                        display: true,
+                        text: "GPA"
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+}
+
+</script>
+
+</body>
+</html>
