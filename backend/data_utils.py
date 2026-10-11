@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(
 
 DATASET_PATH = os.path.join(
     BASE_DIR,
-    "Student_performance_data.csv"
+    "Student_performance_data_backup.csv"
 )
 
 
