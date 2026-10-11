@@ -1,0 +1,561 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .risk-page {
+        padding: 24px;
+        color: var(--text-primary, #1e293b);
+    }
+
+    .risk-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .risk-header h1 {
+        font-size: 30px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .risk-header p {
+        color: #64748b;
+        margin: 0;
+    }
+
+    .risk-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 18px;
+        background: #4f46e5;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .risk-btn:hover {
+        background: #4338ca;
+    }
+
+    .risk-btn:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+    .risk-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 25px;
+    }
+
+    .risk-card {
+        background: var(--card-bg, #ffffff);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);
+        min-width: 0;
+    }
+
+    .risk-card .label {
+        font-size: 14px;
+        color: #64748b;
+        margin-bottom: 12px;
+    }
+
+    .risk-card .number {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .high-color { color: #dc2626 !important; }
+    .medium-color { color: #d97706 !important; }
+    .low-color { color: #16a34a !important; }
+    .unknown-color { color: #64748b !important; }
+
+    .risk-toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+    }
+
+    .risk-toolbar input,
+    .risk-toolbar select {
+        padding: 11px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #1e293b;
+        min-width: 190px;
+        outline: none;
+    }
+
+    .risk-toolbar input:focus,
+    .risk-toolbar select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+
+    .risk-table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .risk-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 950px;
+        color: #1e293b;
+    }
+
+    .risk-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+    }
+
+    .risk-table th,
+    .risk-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: top;
+    }
+
+    .risk-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .risk-badge {
+        display: inline-block;
+        padding: 6px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .badge-high {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .badge-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-low {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-unknown {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .score-track {
+        width: 100px;
+        height: 7px;
+        margin-top: 8px;
+        border-radius: 10px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+
+    .score-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: #ef4444;
+    }
+
+    .score-fill.medium { background: #f59e0b; }
+    .score-fill.low { background: #22c55e; }
+
+    .reason-list {
+        padding-left: 17px;
+        margin: 0;
+        min-width: 210px;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .risk-message {
+        padding: 20px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .risk-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 15px 2px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    @media (max-width: 1000px) {
+        .risk-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 550px) {
+        .risk-page { padding: 12px; }
+        .risk-stats { gap: 10px; }
+        .risk-card { padding: 14px; }
+        .risk-card .number { font-size: 25px; }
+        .risk-header h1 { font-size: 24px; }
+    }
+</style>
+
+<div class="risk-page">
+
+    <div class="risk-header">
+        <div>
+            <h1>🎯 At-Risk Students</h1>
+            <p>Identify students who may need additional academic support.</p>
+        </div>
+
+        <button class="risk-btn" id="refreshBtn" type="button"
+                onclick="loadRiskData()">
+            ↻ Refresh Data
+        </button>
+    </div>
+
+    <div class="risk-stats">
+
+        <div class="risk-card">
+            <div class="label">Total Students</div>
+            <div class="number" id="totalStudents">—</div>
+        </div>
+
+        <div class="risk-card">
+            <div class="label">High Risk Students</div>
+            <div class="number high-color" id="highRisk">—</div>
+            <small id="highPercentage">Loading...</small>
+        </div>
+
+        <div class="risk-card">
+            <div class="label">Medium Risk Students</div>
+            <div class="number medium-color" id="mediumRisk">—</div>
+            <small id="mediumPercentage">Loading...</small>
+        </div>
+
+        <div class="risk-card">
+            <div class="label">Low Risk Students</div>
+            <div class="number low-color" id="lowRisk">—</div>
+            <small id="lowPercentage">Loading...</small>
+        </div>
+
+    </div>
+
+    <div class="risk-card">
+
+        <h3 style="margin-top: 0;">Student Risk Report</h3>
+
+        <div class="risk-toolbar">
+
+            <input
+                type="search"
+                id="studentSearch"
+                placeholder="Search Student ID..."
+                autocomplete="off"
+            >
+
+            <select id="riskFilter">
+                <option value="All">All Risk Levels</option>
+                <option value="High">High Risk</option>
+                <option value="Medium">Medium Risk</option>
+                <option value="Low">Low Risk</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select id="sortOrder">
+                <option value="risk">Highest Risk First</option>
+                <option value="gpa">Lowest Predicted GPA</option>
+                <option value="id">Student ID</option>
+            </select>
+
+        </div>
+
+        <div id="loadingMessage" class="risk-message">
+            Loading student risk data...
+        </div>
+
+        <div id="errorMessage" class="risk-message"
+             style="color: #dc2626;" hidden>
+        </div>
+
+        <div class="risk-table-wrap" id="tableWrap" hidden>
+
+            <table class="risk-table">
+
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Risk Level</th>
+                        <th>Risk Score</th>
+                        <th>Predicted GPA / 10</th>
+                        <th>Performance Category</th>
+                        <th>Risk Factors</th>
+                    </tr>
+                </thead>
+
+                <tbody id="riskTableBody"></tbody>
+
+            </table>
+
+        </div>
+
+        <div id="emptyMessage" class="risk-message" hidden>
+            No students match your search.
+        </div>
+
+        <div class="risk-footer">
+            <span id="resultCount">0 students</span>
+            <span>Predictions are estimates, not guaranteed outcomes.</span>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    let allRiskStudents = [];
+
+    const $ = (id) => document.getElementById(id);
+
+    function setText(id, value) {
+        $(id).textContent = value;
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[char];
+        });
+    }
+
+    function badgeClass(level) {
+        const classes = {
+            High: "badge-high",
+            Medium: "badge-medium",
+            Low: "badge-low",
+            Unknown: "badge-unknown"
+        };
+
+        return classes[level] || "badge-unknown";
+    }
+
+    function renderStudents() {
+        const query = $("studentSearch").value.trim().toLowerCase();
+        const filter = $("riskFilter").value;
+        const sort = $("sortOrder").value;
+
+        let students = allRiskStudents.filter(function (student) {
+            const matchesID = String(student.student_id ?? "")
+                .toLowerCase().includes(query);
+
+            const matchesRisk =
+                filter === "All" || student.risk_level === filter;
+
+            return matchesID && matchesRisk;
+        });
+
+        students.sort(function (a, b) {
+            if (sort === "gpa") {
+                return (Number(a.predicted_gpa) || 0) -
+                       (Number(b.predicted_gpa) || 0);
+            }
+
+            if (sort === "id") {
+                return (Number(a.student_id) || 0) -
+                       (Number(b.student_id) || 0);
+            }
+
+            const order = {
+                High: 0,
+                Medium: 1,
+                Low: 2,
+                Unknown: 3
+            };
+
+            return (order[a.risk_level] ?? 3) -
+                       (order[b.risk_level] ?? 3) ||
+                   (Number(b.risk_score) || 0) -
+                       (Number(a.risk_score) || 0);
+        });
+
+        const tbody = $("riskTableBody");
+
+        tbody.innerHTML = students.map(function (student) {
+            const level = student.risk_level || "Unknown";
+
+            const score = Math.max(
+                0,
+                Math.min(100, Number(student.risk_score) || 0)
+            );
+
+            const gpa = Number(student.predicted_gpa);
+            const gpaText = Number.isFinite(gpa) ? gpa.toFixed(2) : "—";
+
+            const reasons = Array.isArray(student.reasons)
+                ? student.reasons
+                : [];
+
+            const reasonHTML = reasons.length
+                ? reasons.map(function (reason) {
+                    return "<li>" + escapeHTML(reason) + "</li>";
+                }).join("")
+                : "<li>No reasons provided</li>";
+
+            const fillClass = level === "Low"
+                ? "low"
+                : level === "Medium" ? "medium" : "";
+
+            return `
+                <tr>
+                    <td><strong>${escapeHTML(student.student_id ?? "—")}</strong></td>
+
+                    <td>
+                        <span class="risk-badge ${badgeClass(level)}">
+                            ${escapeHTML(level)}
+                        </span>
+                    </td>
+
+                    <td>
+                        <strong>${score}/100</strong>
+                        <div class="score-track">
+                            <div class="score-fill ${fillClass}"
+                                 style="width:${score}%"></div>
+                        </div>
+                    </td>
+
+                    <td>${gpaText} / 10</td>
+
+                    <td>${escapeHTML(
+                        student.performance_category ?? "—"
+                    )}</td>
+
+                    <td>
+                        <ul class="reason-list">${reasonHTML}</ul>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+
+        $("tableWrap").hidden = students.length === 0;
+        $("emptyMessage").hidden = students.length !== 0;
+
+        setText(
+            "resultCount",
+            `Showing ${students.length} of ${allRiskStudents.length} students`
+        );
+    }
+
+    async function loadRiskData() {
+        const button = $("refreshBtn");
+        const loading = $("loadingMessage");
+        const error = $("errorMessage");
+
+        button.disabled = true;
+        button.textContent = "Loading...";
+        loading.hidden = false;
+        loading.textContent = "Loading student risk data...";
+        error.hidden = true;
+        $("tableWrap").hidden = true;
+        $("emptyMessage").hidden = true;
+
+        try {
+            const response = await fetch("/api/at-risk", {
+                method: "GET",
+                headers: { "Accept": "application/json" },
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("API returned HTTP " + response.status);
+            }
+
+            const data = await response.json();
+
+            if (!Array.isArray(data.students)) {
+                throw new Error("Student data is missing from the API response.");
+            }
+
+            allRiskStudents = data.students;
+
+            const summary = data.summary || {};
+
+            setText("totalStudents",
+                summary.total_students ?? allRiskStudents.length);
+
+            setText("highRisk", summary.high_risk ?? 0);
+            setText("mediumRisk", summary.medium_risk ?? 0);
+            setText("lowRisk", summary.low_risk ?? 0);
+
+            setText("highPercentage",
+                (summary.high_percentage ?? 0) + "% of students");
+
+            setText("mediumPercentage",
+                (summary.medium_percentage ?? 0) + "% of students");
+
+            setText("lowPercentage",
+                (summary.low_percentage ?? 0) + "% of students");
+
+            loading.hidden = true;
+            renderStudents();
+
+        } catch (err) {
+            loading.hidden = true;
+            error.hidden = false;
+            error.textContent = "Unable to load student data: " + err.message;
+            console.error("At-risk data loading error:", err);
+
+        } finally {
+            button.disabled = false;
+            button.textContent = "↻ Refresh Data";
+        }
+    }
+
+    $("studentSearch").addEventListener("input", renderStudents);
+    $("riskFilter").addEventListener("change", renderStudents);
+    $("sortOrder").addEventListener("change", renderStudents);
+
+    // Start loading after this script has initialized.
+    loadRiskData();
+
+})();
+</script>
+
+{% endblock %}
