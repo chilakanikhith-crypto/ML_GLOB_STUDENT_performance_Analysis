@@ -1,49 +1,66 @@
-import json
 import os
+import json
 import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_file
-from data_utils import calculate_grade_class, get_next_student_id, load_data
+
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    send_file
+)
+
+from data_utils import (
+    calculate_grade_class,
+    get_next_student_id,
+    load_data
+)
+
 from ml_models import train_all_models
 from prediction import predict_student, what_if_analysis
 from risk_analysis import analyze_all_students, get_risk_summary
 
+
 # ============================================================
 # PATH CONFIGURATION
 # ============================================================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+
 CSV_PATH = os.path.join(
     BASE_DIR,
     "Student_performance_data.csv"
 )
-MODELS_DIR = os.path.join(
-    BASE_DIR,
-    "models"
-)
-TEMPLATES_DIR = os.path.join(
-    BASE_DIR,
-    "templates"
-)
-STATIC_DIR = os.path.join(
-    BASE_DIR,
-    "static"
-)
+
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+
 RESULTS_PATH = os.path.join(
     MODELS_DIR,
     "model_evaluation_results.json"
 )
 
-# ============================================================
-# FLASK APP
-# ============================================================
-app = Flask(
-    __name__,
-    template_folder=TEMPLATES_DIR,
-    static_folder=STATIC_DIR
-)
+os.makedirs(MODELS_DIR, exist_ok=True)
+
 
 # ============================================================
-# CONSTANTS
+# FLASK CONFIGURATION
 # ============================================================
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
+)
+
+
+# ============================================================
+# DATASET COLUMNS AND FEATURES
+# ============================================================
+
 REQUIRED_COLUMNS = [
     "StudentID",
     "Age",
@@ -77,51 +94,70 @@ ML_FEATURES = [
     "Volunteering"
 ]
 
+GRADE_LABELS = {
+    0: "Excellent",
+    1: "Very Good",
+    2: "Good",
+    3: "Needs Improvement",
+    4: "At Risk"
+}
+
+
 # ============================================================
 # HELPER FUNCTIONS
 # ============================================================
+
 def get_dataframe():
-    """Load the latest dataset."""
+    """Load the current student dataset."""
     return load_data()
 
 
 def clean_value(value):
-    """Convert pandas/numpy values into JSON-safe values."""
+    """Convert pandas and numpy values into JSON-safe values."""
     if pd.isna(value):
         return None
 
     if hasattr(value, "item"):
         try:
             return value.item()
-        except Exception:
+        except (ValueError, AttributeError):
             pass
 
     return value
 
 
 def dataframe_to_records(df):
-    """Convert dataframe rows into JSON-safe records."""
-    records = []
-
-    for record in df.to_dict(orient="records"):
-        records.append({
+    """Convert dataframe rows into JSON-safe dictionaries."""
+    return [
+        {
             key: clean_value(value)
             for key, value in record.items()
-        })
+        }
+        for record in df.to_dict(orient="records")
+    ]
 
-    return records
+
+def validate_dataset_columns(df):
+    """Check that all required columns exist."""
+    missing = [
+        column
+        for column in REQUIRED_COLUMNS
+        if column not in df.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            "Missing dataset columns: " + ", ".join(missing)
+        )
+
+    return True
 
 
 def apply_student_filters(df, params):
-    """Apply filters used by the Student Records page."""
+    """Filter student records using request parameters."""
     filtered = df.copy()
 
-    # Student ID
-    student_id = params.get(
-        "student_id",
-        ""
-    ).strip()
-
+    student_id = params.get("student_id", "").strip()
     if student_id:
         try:
             filtered = filtered[
@@ -130,48 +166,28 @@ def apply_student_filters(df, params):
         except ValueError:
             pass
 
-    # Gender
-    gender = params.get(
-        "gender",
-        ""
-    ).strip()
-
+    gender = params.get("gender", "").strip()
     if gender:
         filtered = filtered[
             filtered["Gender"].astype(str) == gender
         ]
 
-    # Grade Class
-    grade_class = params.get(
-        "grade_class",
-        ""
-    ).strip()
-
+    grade_class = params.get("grade_class", "").strip()
     if grade_class:
         try:
             filtered = filtered[
-                filtered["GradeClass"] == float(grade_class)
+                filtered["GradeClass"] == int(grade_class)
             ]
         except ValueError:
             pass
 
-    # Tutoring
-    tutoring = params.get(
-        "tutoring",
-        ""
-    ).strip()
-
+    tutoring = params.get("tutoring", "").strip()
     if tutoring:
         filtered = filtered[
             filtered["Tutoring"].astype(str) == tutoring
         ]
 
-    # Minimum GPA
-    min_gpa = params.get(
-        "min_gpa",
-        ""
-    ).strip()
-
+    min_gpa = params.get("min_gpa", "").strip()
     if min_gpa:
         try:
             filtered = filtered[
@@ -180,12 +196,7 @@ def apply_student_filters(df, params):
         except ValueError:
             pass
 
-    # Maximum GPA
-    max_gpa = params.get(
-        "max_gpa",
-        ""
-    ).strip()
-
+    max_gpa = params.get("max_gpa", "").strip()
     if max_gpa:
         try:
             filtered = filtered[
@@ -194,12 +205,7 @@ def apply_student_filters(df, params):
         except ValueError:
             pass
 
-    # Maximum Absences
-    max_absences = params.get(
-        "max_absences",
-        ""
-    ).strip()
-
+    max_absences = params.get("max_absences", "").strip()
     if max_absences:
         try:
             filtered = filtered[
@@ -213,313 +219,233 @@ def apply_student_filters(df, params):
 
 def validate_prediction_input(data):
     """
-    Validate and convert the 12 ML features.
-    StudentID and actual GPA are intentionally excluded.
+    Validate the 12 input features.
+    Actual GPA and StudentID are not prediction inputs.
     """
-    if not data:
-        return None, "No prediction data received."
+    if not isinstance(data, dict):
+        return None, "Please provide valid prediction data."
 
     student_data = {}
 
     for feature in ML_FEATURES:
         if feature not in data:
-            return None, (
-                f"Missing feature: {feature}"
-            )
+            return None, f"Missing feature: {feature}"
 
         try:
-            student_data[feature] = float(
-                data[feature]
-            )
-        except (
-            ValueError,
-            TypeError
-        ):
-            return None, (
-                f"Invalid value for {feature}"
-            )
+            value = float(data[feature])
+        except (ValueError, TypeError):
+            return None, f"Invalid value for {feature}."
+
+        if not pd.notna(value) or value in (float("inf"), float("-inf")):
+            return None, f"Invalid numeric value for {feature}."
+
+        student_data[feature] = value
 
     return student_data, None
+
+
+def read_model_results():
+    """Read model evaluation results from JSON."""
+    if not os.path.exists(RESULTS_PATH):
+        return {}
+
+    with open(RESULTS_PATH, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def json_error(error, status_code=500):
+    """Return a consistent JSON error response."""
+    return jsonify({
+        "success": False,
+        "error": str(error)
+    }), status_code
 
 
 # ============================================================
 # DASHBOARD
 # ============================================================
+
 @app.route("/")
 def dashboard():
-    return render_template(
-        "dashboard.html"
-    )
+    return render_template("dashboard.html")
 
 
 @app.route("/api/dashboard")
 def dashboard_api():
     try:
         df = get_dataframe()
+        validate_dataset_columns(df)
 
-        # KPI statistics
-        total_students = len(df)
-        average_gpa = float(
-            df["GPA"].mean()
-        )
-        highest_gpa = float(
-            df["GPA"].max()
-        )
-        lowest_gpa = float(
-            df["GPA"].min()
-        )
+        total_students = int(len(df))
+        average_gpa = float(df["GPA"].mean())
+        highest_gpa = float(df["GPA"].max())
+        lowest_gpa = float(df["GPA"].min())
 
-        # GPA distribution
+        # GPA distribution for the 1-10 scale.
+        bins = list(range(1, 11))
         gpa_distribution = []
-        bins = [
-            0,
-            0.5,
-            1,
-            1.5,
-            2,
-            2.5,
-            3,
-            3.5,
-            4
-        ]
 
-        for i in range(
-            len(bins) - 1
-        ):
-            lower = bins[i]
-            upper = bins[i + 1]
+        for index in range(len(bins) - 1):
+            lower = bins[index]
+            upper = bins[index + 1]
 
-            if upper == 4:
+            if upper == 10:
                 count = int(
                     (
                         (df["GPA"] >= lower)
-                        &
-                        (df["GPA"] <= upper)
+                        & (df["GPA"] <= upper)
                     ).sum()
                 )
             else:
                 count = int(
                     (
                         (df["GPA"] >= lower)
-                        &
-                        (df["GPA"] < upper)
+                        & (df["GPA"] < upper)
                     ).sum()
                 )
 
             gpa_distribution.append({
-                "range":
-                    f"{lower:.1f}-{upper:.1f}",
-                "count":
-                    count
+                "range": f"{lower}-{upper}",
+                "count": count
             })
 
-        # GradeClass distribution
-        grade_distribution = []
-        grade_counts = (
-            df["GradeClass"]
-            .value_counts()
-            .sort_index()
-        )
+        # GradeClass distribution.
+        grade_distribution = [
+            {
+                "grade_class": int(grade),
+                "label": GRADE_LABELS.get(int(grade), "Unknown"),
+                "count": int(count)
+            }
+            for grade, count in (
+                df["GradeClass"].value_counts().sort_index().items()
+            )
+        ]
 
-        for grade_class, count in (
-            grade_counts.items()
-        ):
-            grade_distribution.append({
-                "grade_class":
-                    int(grade_class),
-                "count":
-                    int(count)
-            })
+        # Study time vs GPA.
+        study_time_data = [
+            {
+                "study_time": float(row["StudyTimeWeekly"]),
+                "gpa": float(row["GPA"])
+            }
+            for _, row in df[
+                ["StudyTimeWeekly", "GPA"]
+            ].iterrows()
+        ]
 
-        # Study Time vs GPA
-        study_time_data = []
+        # Absences vs GPA.
+        absences_data = [
+            {
+                "absences": float(row["Absences"]),
+                "gpa": float(row["GPA"])
+            }
+            for _, row in df[
+                ["Absences", "GPA"]
+            ].iterrows()
+        ]
 
-        for _, row in df[
-            [
-                "StudyTimeWeekly",
-                "GPA"
-            ]
-        ].iterrows():
-            study_time_data.append({
-                "study_time":
-                    float(row["StudyTimeWeekly"]),
-                "gpa":
-                    float(row["GPA"])
-            })
-
-        # Absences vs GPA
-        absences_data = []
-
-        for _, row in df[
-            [
-                "Absences",
-                "GPA"
-            ]
-        ].iterrows():
-            absences_data.append({
-                "absences":
-                    float(row["Absences"]),
-                "gpa":
-                    float(row["GPA"])
-            })
-
-        # Parental Support vs GPA
-        parental_support_data = []
+        # Parental support vs GPA.
         support_group = (
-            df.groupby(
-                "ParentalSupport"
-            )["GPA"]
+            df.groupby("ParentalSupport")["GPA"]
             .mean()
             .sort_index()
         )
 
-        for support, gpa in (
-            support_group.items()
-        ):
-            parental_support_data.append({
-                "support":
-                    int(support),
-                "gpa":
-                    float(gpa)
-            })
+        parental_support_data = [
+            {
+                "support": int(support),
+                "gpa": float(gpa)
+            }
+            for support, gpa in support_group.items()
+        ]
 
-        # Activity vs GPA
+        # Activities vs GPA.
         activity_data = []
-        activity_columns = [
+
+        for column in [
             "Extracurricular",
             "Sports",
             "Music",
             "Volunteering"
-        ]
-
-        for column in activity_columns:
-            active_rows = df[
-                df[column] == 1
-            ]
-
-            if len(active_rows) > 0:
-                average_gpa = float(
-                    active_rows["GPA"].mean()
-                )
-            else:
-                average_gpa = 0.0
+        ]:
+            active_rows = df[df[column] == 1]
 
             activity_data.append({
-                "activity":
-                    column,
-                "average_gpa":
-                    average_gpa
+                "activity": column,
+                "average_gpa": (
+                    float(active_rows["GPA"].mean())
+                    if not active_rows.empty
+                    else 0.0
+                )
             })
 
-        # GPA by GradeClass
-        grade_gpa_data = []
-        grade_gpa = (
-            df.groupby(
-                "GradeClass"
-            )["GPA"]
-            .mean()
-            .sort_index()
-        )
+        # GPA by GradeClass.
+        grade_gpa = df.groupby("GradeClass")["GPA"].mean()
 
-        for grade_class, gpa in (
-            grade_gpa.items()
-        ):
-            grade_gpa_data.append({
-                "grade_class":
-                    int(grade_class),
-                "average_gpa":
-                    float(gpa)
-            })
+        grade_gpa_data = [
+            {
+                "grade_class": int(grade),
+                "average_gpa": float(gpa)
+            }
+            for grade, gpa in grade_gpa.items()
+        ]
 
         return jsonify({
-            "success":
-                True,
-            "total_students":
-                total_students,
-            "average_gpa":
-                average_gpa,
-            "highest_gpa":
-                highest_gpa,
-            "lowest_gpa":
-                lowest_gpa,
-            "gpa_distribution":
-                gpa_distribution,
-            "grade_distribution":
-                grade_distribution,
-            "study_time_data":
-                study_time_data,
-            "absences_data":
-                absences_data,
-            "parental_support_data":
-                parental_support_data,
-            "activity_data":
-                activity_data,
-            "grade_gpa_data":
-                grade_gpa_data
+            "success": True,
+            "gpa_scale": "1-10",
+            "total_students": total_students,
+            "average_gpa": average_gpa,
+            "highest_gpa": highest_gpa,
+            "lowest_gpa": lowest_gpa,
+            "gpa_distribution": gpa_distribution,
+            "grade_distribution": grade_distribution,
+            "study_time_data": study_time_data,
+            "absences_data": absences_data,
+            "parental_support_data": parental_support_data,
+            "activity_data": activity_data,
+            "grade_gpa_data": grade_gpa_data
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
-# STUDENTS
+# STUDENT RECORDS
 # ============================================================
+
 @app.route("/students")
 def students():
-    return render_template(
-        "students.html"
-    )
+    return render_template("students.html")
 
 
 @app.route("/api/students")
 def students_api():
     try:
         df = get_dataframe()
-        filtered = apply_student_filters(
-            df,
-            request.args
-        )
+        filtered = apply_student_filters(df, request.args)
 
         return jsonify({
-            "success":
-                True,
-            "total":
-                len(filtered),
-            "students":
-                dataframe_to_records(
-                    filtered
-                )
+            "success": True,
+            "total": int(len(filtered)),
+            "students": dataframe_to_records(filtered)
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 @app.route("/api/students/download")
 def download_students():
     try:
         df = get_dataframe()
-        filtered = apply_student_filters(
-            df,
-            request.args
-        )
+        filtered = apply_student_filters(df, request.args)
 
         output_path = os.path.join(
             BASE_DIR,
             "filtered_students.csv"
         )
 
-        filtered.to_csv(
-            output_path,
-            index=False
-        )
+        filtered.to_csv(output_path, index=False)
 
         return send_file(
             output_path,
@@ -527,555 +453,298 @@ def download_students():
             download_name="filtered_students.csv"
         )
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
 # ADD STUDENT
 # ============================================================
+
 @app.route("/add-student")
 def add_student():
-    return render_template(
-        "add_student.html"
-    )
+    return render_template("add_student.html")
 
 
 @app.route("/api/next-student-id")
 def next_student_id_api():
     try:
         df = load_data()
-        next_id = get_next_student_id(
-            df
-        )
 
         return jsonify({
-            "success":
-                True,
-            "next_student_id":
-                int(next_id)
+            "success": True,
+            "next_student_id": int(get_next_student_id(df))
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
-@app.route(
-    "/api/add-student",
-    methods=["POST"]
-)
+@app.route("/api/add-student", methods=["POST"])
 def add_student_api():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
-        if not data:
-            return jsonify({
-                "success": False,
-                "error":
-                    "No student data received."
-            }), 400
+        if not isinstance(data, dict):
+            return json_error("No valid student data received.", 400)
 
-        # Load current dataset
         df = load_data()
+        validate_dataset_columns(df)
 
-        # Generate ID
-        student_id = get_next_student_id(
-            df
-        )
+        required_fields = ML_FEATURES + ["GPA"]
 
-        # Required fields
-        required_input_fields = [
-            "Age",
+        for field in required_fields:
+            if field not in data:
+                return json_error(f"Missing field: {field}", 400)
+
+        try:
+            student = {}
+
+            for field in ML_FEATURES:
+                student[field] = float(data[field])
+
+            gpa = float(data["GPA"])
+
+        except (ValueError, TypeError):
+            return json_error("Invalid student input.", 400)
+
+        if not pd.Series([gpa]).between(1, 10).all():
+            return json_error("GPA must be between 1 and 10.", 400)
+
+        if student["Age"] < 1:
+            return json_error("Age must be positive.", 400)
+
+        if student["StudyTimeWeekly"] < 0:
+            return json_error("Study time cannot be negative.", 400)
+
+        if student["Absences"] < 0:
+            return json_error("Absences cannot be negative.", 400)
+
+        # Validate binary activity fields.
+        for field in [
             "Gender",
-            "Ethnicity",
-            "ParentalEducation",
-            "StudyTimeWeekly",
-            "Absences",
             "Tutoring",
-            "ParentalSupport",
             "Extracurricular",
             "Sports",
             "Music",
-            "Volunteering",
-            "GPA"
-        ]
+            "Volunteering"
+        ]:
+            if student[field] not in (0, 1):
+                return json_error(
+                    f"{field} must be either 0 or 1.",
+                    400
+                )
 
-        for field in required_input_fields:
-            if field not in data:
-                return jsonify({
-                    "success": False,
-                    "error":
-                        f"Missing field: {field}"
-                }), 400
+        # Save new record.
+        student_id = get_next_student_id(df)
+        grade_class = calculate_grade_class(gpa)
 
-        # Parse values
-        try:
-            age = int(
-                data["Age"]
-            )
-            gender = int(
-                data["Gender"]
-            )
-            ethnicity = int(
-                data["Ethnicity"]
-            )
-            parental_education = int(
-                data["ParentalEducation"]
-            )
-            study_time = float(
-                data["StudyTimeWeekly"]
-            )
-            absences = int(
-                data["Absences"]
-            )
-            tutoring = int(
-                data["Tutoring"]
-            )
-            parental_support = int(
-                data["ParentalSupport"]
-            )
-            extracurricular = int(
-                data["Extracurricular"]
-            )
-            sports = int(
-                data["Sports"]
-            )
-            music = int(
-                data["Music"]
-            )
-            volunteering = int(
-                data["Volunteering"]
-            )
-            gpa = float(
-                data["GPA"]
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-            return jsonify({
-                "success": False,
-                "error":
-                    "Invalid student input."
-            }), 400
-
-        # Basic validation
-        if age < 1:
-            return jsonify({
-                "success": False,
-                "error":
-                    "Age must be positive."
-            }), 400
-
-        if study_time < 0:
-            return jsonify({
-                "success": False,
-                "error":
-                    "Study time cannot be negative."
-            }), 400
-
-        if absences < 0:
-            return jsonify({
-                "success": False,
-                "error":
-                    "Absences cannot be negative."
-            }), 400
-
-        if gpa < 0 or gpa > 4:
-            return jsonify({
-                "success": False,
-                "error":
-                    "GPA must be between 0 and 4."
-            }), 400
-
-        # Calculate GradeClass
-        grade_class = calculate_grade_class(
-            gpa
-        )
-
-        # Create record
         new_student = {
-            "StudentID":
-                int(student_id),
-            "Age":
-                age,
-            "Gender":
-                gender,
-            "Ethnicity":
-                ethnicity,
-            "ParentalEducation":
-                parental_education,
-            "StudyTimeWeekly":
-                study_time,
-            "Absences":
-                absences,
-            "Tutoring":
-                tutoring,
-            "ParentalSupport":
-                parental_support,
-            "Extracurricular":
-                extracurricular,
-            "Sports":
-                sports,
-            "Music":
-                music,
-            "Volunteering":
-                volunteering,
-            "GPA":
-                gpa,
-            "GradeClass":
-                grade_class
+            "StudentID": int(student_id),
+            **student,
+            "GPA": gpa,
+            "GradeClass": int(grade_class)
         }
 
-        # Append to CSV
-        new_row = pd.DataFrame(
-            [new_student]
-        )
-
         updated_df = pd.concat(
-            [
-                df,
-                new_row
-            ],
+            [df, pd.DataFrame([new_student])],
             ignore_index=True
         )
 
-        updated_df.to_csv(
-            CSV_PATH,
-            index=False
-        )
+        updated_df.to_csv(CSV_PATH, index=False)
 
         return jsonify({
-            "success":
-                True,
-            "message":
-                "Student added successfully.",
-            "student":
-                new_student
+            "success": True,
+            "message": "Student added successfully.",
+            "student": new_student
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
+
+
 # ============================================================
 # PREDICTION / AI ACADEMIC ADVISOR
 # ============================================================
+
 @app.route("/predict")
 def predict():
-    return render_template(
-        "predict.html"
-    )
+    return render_template("predict.html")
 
 
-@app.route(
-    "/api/predict",
-    methods=["POST"]
-)
+@app.route("/api/predict", methods=["POST"])
 def predict_api():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
-        student_data, error = (
-            validate_prediction_input(data)
-        )
+        student_data, error = validate_prediction_input(data)
 
         if error:
-            return jsonify({
-                "success": False,
-                "error": error
-            }), 400
+            return json_error(error, 400)
 
-        result = predict_student(
-            student_data
-        )
+        result = predict_student(student_data)
 
         return jsonify({
-            "success":
-                True,
-            "result":
-                result
+            "success": True,
+            "result": result
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
 # MODEL LAB
 # ============================================================
+
 @app.route("/model-lab")
 def model_lab():
-    return render_template(
-        "model_lab.html"
-    )
+    return render_template("model_lab.html")
 
 
 @app.route("/api/model-lab")
 def model_lab_api():
     try:
-        if not os.path.exists(
-            RESULTS_PATH
-        ):
-            return jsonify({
-                "success": False,
-                "error":
-                    "Model results not found."
-            }), 404
+        results = read_model_results()
 
-        with open(
-            RESULTS_PATH,
-            "r",
-            encoding="utf-8"
-        ) as file:
-            results = json.load(file)
+        if not results:
+            return json_error(
+                "Model evaluation results not found. "
+                "Train the models first.",
+                404
+            )
 
         return jsonify({
-            "success":
-                True,
+            "success": True,
             **results
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
 # WHAT-IF ANALYSIS
 # ============================================================
+
 @app.route("/what-if")
 def what_if():
-    return render_template(
-        "what_if.html"
-    )
+    return render_template("what_if.html")
 
 
-@app.route(
-    "/api/what-if",
-    methods=["POST"]
-)
+@app.route("/api/what-if", methods=["POST"])
 def what_if_api():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
-        if not data:
-            return jsonify({
-                "success": False,
-                "error":
-                    "No scenario data received."
-            }), 400
+        if not isinstance(data, dict):
+            return json_error("No scenario data received.", 400)
 
-        baseline_data = data.get(
-            "baseline"
-        )
+        baseline_data = data.get("baseline")
+        scenario_data = data.get("scenario")
 
-        scenario_data = data.get(
-            "scenario"
-        )
+        if not isinstance(baseline_data, dict):
+            return json_error("Baseline data is required.", 400)
 
-        if not baseline_data:
-            return jsonify({
-                "success": False,
-                "error":
-                    "Baseline data is required."
-            }), 400
+        if not isinstance(scenario_data, dict):
+            return json_error("Scenario data is required.", 400)
 
-        if not scenario_data:
-            return jsonify({
-                "success": False,
-                "error":
-                    "Scenario data is required."
-            }), 400
+        baseline, error = validate_prediction_input(baseline_data)
 
-        for feature in ML_FEATURES:
-            if feature not in baseline_data:
-                return jsonify({
-                    "success": False,
-                    "error":
-                        f"Baseline missing {feature}"
-                }), 400
+        if error:
+            return json_error(f"Baseline: {error}", 400)
 
-            if feature not in scenario_data:
-                return jsonify({
-                    "success": False,
-                    "error":
-                        f"Scenario missing {feature}"
-                }), 400
+        scenario, error = validate_prediction_input(scenario_data)
 
-            try:
-                baseline_data[feature] = float(
-                    baseline_data[feature]
-                )
+        if error:
+            return json_error(f"Scenario: {error}", 400)
 
-                scenario_data[feature] = float(
-                    scenario_data[feature]
-                )
-
-            except (
-                ValueError,
-                TypeError
-            ):
-                return jsonify({
-                    "success": False,
-                    "error":
-                        f"Invalid value for {feature}"
-                }), 400
-
-        result = what_if_analysis(
-            baseline_data,
-            scenario_data
-        )
+        result = what_if_analysis(baseline, scenario)
 
         return jsonify({
-            "success":
-                True,
-            "result":
-                result
+            "success": True,
+            "result": result
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
-# RETRAIN
+# RETRAIN MODELS
 # ============================================================
+
 @app.route("/retrain")
 def retrain():
-    return render_template(
-        "retrain.html"
-    )
+    return render_template("retrain.html")
 
 
-@app.route(
-    "/api/retrain",
-    methods=["POST"]
-)
+@app.route("/api/retrain", methods=["POST"])
 def retrain_api():
     try:
         df = load_data()
+        validate_dataset_columns(df)
 
-        # Validate columns
-        missing_columns = [
-            column
-            for column in REQUIRED_COLUMNS
-            if column not in df.columns
-        ]
-
-        if missing_columns:
-            return jsonify({
-                "success":
-                    False,
-                "error":
-                    "Missing columns: "
-                    +
-                    ", ".join(
-                        missing_columns
-                    )
-            }), 400
-
-        # Minimum records
         if len(df) < 20:
-            return jsonify({
-                "success": False,
-                "error":
-                    "At least 20 records required."
-            }), 400
+            return json_error(
+                "At least 20 student records are required.",
+                400
+            )
 
-        # Leakage protection
-        if "StudentID" in ML_FEATURES:
-            return jsonify({
-                "success": False,
-                "error":
-                    "StudentID cannot be an ML feature."
-            }), 400
+        if "StudentID" in ML_FEATURES or "GPA" in ML_FEATURES:
+            return json_error(
+                "Invalid feature configuration: data leakage detected.",
+                400
+            )
 
-        if "GPA" in ML_FEATURES:
-            return jsonify({
-                "success": False,
-                "error":
-                    "GPA cannot be used to predict GradeClass."
-            }), 400
+        if df[REQUIRED_COLUMNS].isnull().any().any():
+            return json_error(
+                "Dataset contains missing values.",
+                400
+            )
 
-        # Missing values
-        if df[
-            REQUIRED_COLUMNS
-        ].isnull().any().any():
-            return jsonify({
-                "success": False,
-                "error":
-                    "Dataset contains missing values."
-            }), 400
+        if not df["GPA"].between(1, 10).all():
+            return json_error(
+                "GPA must be on the 1-10 scale.",
+                400
+            )
 
-        # Train
-        train_all_models()
+        results = train_all_models()
 
-        # Read results
-        if not os.path.exists(
-            RESULTS_PATH
-        ):
-            return jsonify({
-                "success": False,
-                "error":
-                    "Evaluation results were not saved."
-            }), 500
+        if not isinstance(results, dict):
+            results = read_model_results()
 
-        with open(
-            RESULTS_PATH,
-            "r",
-            encoding="utf-8"
-        ) as file:
-            results = json.load(file)
+        if not results:
+            return json_error(
+                "Model evaluation results were not saved.",
+                500
+            )
 
         return jsonify({
-            "success":
-                True,
-            "message":
-                "Models retrained successfully.",
-            "best_classification_model":
-                results.get(
-                    "best_classification_model"
-                ),
-            "best_regression_model":
-                results.get(
-                    "best_regression_model"
-                ),
-            "results":
-                results
+            "success": True,
+            "message": "Models retrained successfully.",
+            "best_classification_model": results.get(
+                "best_classifier",
+                results.get("best_classification_model")
+            ),
+            "best_regression_model": results.get(
+                "best_regressor",
+                results.get("best_regression_model")
+            ),
+            "results": results
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
 # AT-RISK STUDENT DETECTION
 # ============================================================
+
 @app.route("/at-risk")
 def at_risk():
-    return render_template(
-        "at_risk.html"
-    )
+    return render_template("at_risk.html")
 
 
 @app.route("/api/at-risk")
@@ -1085,39 +754,22 @@ def at_risk_api():
 
         if df.empty:
             return jsonify({
-                "success":
-                    True,
+                "success": True,
                 "summary": {
-                    "total_students":
-                        0,
-                    "high_risk":
-                        0,
-                    "medium_risk":
-                        0,
-                    "low_risk":
-                        0,
-                    "high_percentage":
-                        0,
-                    "medium_percentage":
-                        0,
-                    "low_percentage":
-                        0
+                    "total_students": 0,
+                    "high_risk": 0,
+                    "medium_risk": 0,
+                    "low_risk": 0,
+                    "high_percentage": 0,
+                    "medium_percentage": 0,
+                    "low_percentage": 0
                 },
-                "students":
-                    []
+                "students": []
             })
 
-        # Run ML-based risk analysis
-        results = analyze_all_students(
-            df
-        )
+        results = analyze_all_students(df)
+        summary = get_risk_summary(results)
 
-        # Generate summary
-        summary = get_risk_summary(
-            results
-        )
-
-        # Sort High -> Medium -> Low
         risk_order = {
             "High": 0,
             "Medium": 1,
@@ -1126,188 +778,119 @@ def at_risk_api():
 
         results.sort(
             key=lambda student: (
-                risk_order.get(
-                    student["risk_level"],
-                    3
-                ),
-                -student["risk_score"],
-                student["student_id"]
+                risk_order.get(student.get("risk_level"), 3),
+                -student.get("risk_score", 0),
+                student.get("student_id", 0)
             )
         )
 
         return jsonify({
-            "success":
-                True,
-            "summary":
-                summary,
-            "students":
-                results
+            "success": True,
+            "summary": summary,
+            "students": results
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
-# STATUS
+# APPLICATION STATUS
 # ============================================================
+
 @app.route("/api/status")
 def status_api():
     try:
         df = load_data()
 
-        classifier_exists = os.path.exists(
-            os.path.join(
-                MODELS_DIR,
-                "academic_performance_model.pkl"
-            )
+        classifier_path = os.path.join(
+            MODELS_DIR,
+            "academic_performance_model.pkl"
         )
 
-        regressor_exists = os.path.exists(
-            os.path.join(
-                MODELS_DIR,
-                "academic_gpa_model.pkl"
-            )
-        )
-
-        results_exists = os.path.exists(
-            RESULTS_PATH
+        regressor_path = os.path.join(
+            MODELS_DIR,
+            "academic_gpa_model.pkl"
         )
 
         return jsonify({
-            "success":
-                True,
-            "dataset_exists":
-                os.path.exists(
-                    CSV_PATH
-                ),
-            "students":
-                len(df),
-            "classifier_ready":
-                classifier_exists,
-            "regressor_ready":
-                regressor_exists,
-            "evaluation_ready":
-                results_exists,
-            "features":
-                len(ML_FEATURES),
-            "leakage_protection":
-                True
+            "success": True,
+            "dataset_exists": os.path.exists(CSV_PATH),
+            "students": int(len(df)),
+            "classifier_ready": os.path.exists(classifier_path),
+            "regressor_ready": os.path.exists(regressor_path),
+            "evaluation_ready": os.path.exists(RESULTS_PATH),
+            "features": len(ML_FEATURES),
+            "gpa_scale": "1-10",
+            "leakage_protection": True
         })
 
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    except Exception as error:
+        return json_error(error)
 
 
 # ============================================================
 # ERROR HANDLERS
 # ============================================================
+
 @app.errorhandler(404)
 def page_not_found(error):
-    if request.path.startswith(
-        "/api/"
-    ):
+    if request.path.startswith("/api/"):
         return jsonify({
-            "success":
-                False,
-            "error":
-                "API endpoint not found."
+            "success": False,
+            "error": "API endpoint not found."
         }), 404
 
-    return """
-    <h1>404 - Page Not Found</h1>
-    <p>The requested page does not exist.</p>
-    """, 404
+    return (
+        "<h1>404 - Page Not Found</h1>"
+        "<p>The requested page does not exist.</p>",
+        404
+    )
 
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    if request.path.startswith(
-        "/api/"
-    ):
+    if request.path.startswith("/api/"):
         return jsonify({
-            "success":
-                False,
-            "error":
-                "Internal server error."
+            "success": False,
+            "error": "Internal server error. Check the Flask terminal."
         }), 500
 
-    return """
-    <h1>500 - Internal Server Error</h1>
-    <p>Please check the Flask terminal.</p>
-    """, 500
+    return (
+        "<h1>500 - Internal Server Error</h1>"
+        "<p>Please check the Flask terminal.</p>",
+        500
+    )
+
+
 # ============================================================
 # START FLASK
 # ============================================================
+
 if __name__ == "__main__":
+
     print("=" * 60)
     print("ACADEMIC PERFORMANCE ANALYTICS")
     print("=" * 60)
 
-    print()
-    print("Dataset:", CSV_PATH)
+    print("\nDataset:", CSV_PATH)
 
     try:
         df = load_data()
-        print(
-            "Students loaded:",
-            len(df)
-        )
-    except Exception as e:
-        print(
-            "Warning:",
-            str(e)
-        )
+        print("Students loaded:", len(df))
 
-    print()
-    print("Available pages:")
+    except Exception as error:
+        print("Warning:", error)
 
-    print(
-        "Dashboard      : "
-        "http://127.0.0.1:5000/"
-    )
-
-    print(
-        "Students       : "
-        "http://127.0.0.1:5000/students"
-    )
-
-    print(
-        "Add Student    : "
-        "http://127.0.0.1:5000/add-student"
-    )
-
-    print(
-        "Predict        : "
-        "http://127.0.0.1:5000/predict"
-    )
-
-    print(
-        "Model Lab      : "
-        "http://127.0.0.1:5000/model-lab"
-    )
-
-    print(
-        "What-If        : "
-        "http://127.0.0.1:5000/what-if"
-    )
-
-    print(
-        "Retrain        : "
-        "http://127.0.0.1:5000/retrain"
-    )
-
-    print(
-        "At-Risk        : "
-        "http://127.0.0.1:5000/at-risk"
-    )
-
+    print("\nAvailable pages:")
+    print("Dashboard   : http://127.0.0.1:5000/")
+    print("Students    : http://127.0.0.1:5000/students")
+    print("Add Student : http://127.0.0.1:5000/add-student")
+    print("Predict     : http://127.0.0.1:5000/predict")
+    print("Model Lab   : http://127.0.0.1:5000/model-lab")
+    print("What-If     : http://127.0.0.1:5000/what-if")
+    print("Retrain     : http://127.0.0.1:5000/retrain")
+    print("At-Risk     : http://127.0.0.1:5000/at-risk")
     print("=" * 60)
 
     app.run(

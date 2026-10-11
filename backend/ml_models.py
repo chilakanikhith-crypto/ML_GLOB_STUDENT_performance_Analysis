@@ -1,28 +1,20 @@
 import os
 import json
 import warnings
-
 import joblib
 import numpy as np
 import pandas as pd
 
 from sklearn.base import clone
-
 from sklearn.model_selection import (
     StratifiedKFold,
     KFold,
     cross_validate,
     RandomizedSearchCV
 )
-
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
-from sklearn.linear_model import (
-    LogisticRegression,
-    LinearRegression
-)
-
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import (
     RandomForestClassifier,
     ExtraTreesClassifier,
@@ -31,7 +23,6 @@ from sklearn.ensemble import (
     ExtraTreesRegressor,
     GradientBoostingRegressor
 )
-
 from sklearn.metrics import (
     accuracy_score,
     balanced_accuracy_score,
@@ -44,7 +35,6 @@ from sklearn.metrics import (
     r2_score
 )
 
-
 warnings.filterwarnings("ignore")
 
 
@@ -53,9 +43,7 @@ warnings.filterwarnings("ignore")
 # ============================================================
 
 BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.abspath(__file__)
-    )
+    os.path.dirname(os.path.abspath(__file__))
 )
 
 CSV_PATH = os.path.join(
@@ -68,10 +56,27 @@ MODELS_DIR = os.path.join(
     "models"
 )
 
-os.makedirs(
+CLASSIFIER_PATH = os.path.join(
     MODELS_DIR,
-    exist_ok=True
+    "academic_performance_model.pkl"
 )
+
+REGRESSOR_PATH = os.path.join(
+    MODELS_DIR,
+    "academic_gpa_model.pkl"
+)
+
+FEATURE_PATH = os.path.join(
+    MODELS_DIR,
+    "feature_names.pkl"
+)
+
+RESULTS_PATH = os.path.join(
+    MODELS_DIR,
+    "model_evaluation_results.json"
+)
+
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 
 # ============================================================
@@ -93,27 +98,24 @@ FEATURE_NAMES = [
     "Volunteering"
 ]
 
-
 CLASSIFICATION_TARGET = "GradeClass"
-
 REGRESSION_TARGET = "GPA"
+
+VALID_GRADE_CLASSES = {0, 1, 2, 3, 4}
 
 
 # ============================================================
-# DATA LOADING
+# LOAD AND VALIDATE DATA
 # ============================================================
 
 def load_training_data():
 
     if not os.path.exists(CSV_PATH):
-
         raise FileNotFoundError(
             f"Dataset not found:\n{CSV_PATH}"
         )
 
-    df = pd.read_csv(
-        CSV_PATH
-    )
+    df = pd.read_csv(CSV_PATH)
 
     required_columns = (
         FEATURE_NAMES
@@ -131,72 +133,94 @@ def load_training_data():
     ]
 
     if missing_columns:
-
         raise ValueError(
             "Missing required columns: "
             + ", ".join(missing_columns)
         )
 
     if len(df) < 20:
-
         raise ValueError(
             "Dataset must contain at least 20 rows."
         )
 
-    # Convert features to numeric
-    for column in FEATURE_NAMES:
+    # Convert model inputs and targets to numeric.
+    numeric_columns = FEATURE_NAMES + [
+        "GPA",
+        "GradeClass"
+    ]
 
+    for column in numeric_columns:
         df[column] = pd.to_numeric(
             df[column],
             errors="coerce"
         )
 
-    df["GPA"] = pd.to_numeric(
-        df["GPA"],
-        errors="coerce"
-    )
-
-    df["GradeClass"] = pd.to_numeric(
-        df["GradeClass"],
-        errors="coerce"
-    )
-
-    required_for_training = (
-        FEATURE_NAMES
-        + [
-            "GPA",
-            "GradeClass"
-        ]
-    )
-
+    # Remove incomplete training rows.
     df = df.dropna(
-        subset=required_for_training
+        subset=numeric_columns
     ).copy()
 
     if len(df) < 20:
-
         raise ValueError(
-            "Not enough valid rows after removing missing values."
+            "Fewer than 20 valid rows remain after "
+            "removing missing values."
         )
 
-    # ========================================================
-    # DATA LEAKAGE PROTECTION
-    # ========================================================
+    # Ensure all values are finite.
+    if not np.isfinite(
+        df[numeric_columns].to_numpy(dtype=float)
+    ).all():
+        raise ValueError(
+            "Dataset contains infinite numeric values."
+        )
 
+    # GPA scale validation.
+    if not df["GPA"].between(1, 10).all():
+        raise ValueError(
+            "GPA must be between 1 and 10. "
+            "Check your CSV before training."
+        )
+
+    # GradeClass validation.
+    actual_classes = set(
+        df["GradeClass"].unique().tolist()
+    )
+
+    if not actual_classes.issubset(
+        VALID_GRADE_CLASSES
+    ):
+        raise ValueError(
+            "GradeClass must contain only 0, 1, 2, 3, 4."
+        )
+
+    df["GradeClass"] = df["GradeClass"].astype(int)
+
+    if df["GradeClass"].nunique() < 2:
+        raise ValueError(
+            "At least two GradeClass categories are required."
+        )
+
+    # Ensure each class has enough samples for 5-fold CV.
+    class_counts = df["GradeClass"].value_counts()
+
+    if class_counts.min() < 5:
+        raise ValueError(
+            "Every GradeClass represented in the dataset "
+            "must have at least 5 rows for 5-fold "
+            "stratified cross-validation."
+        )
+
+    # Prevent data leakage.
     forbidden_features = {
         "StudentID",
         "GPA",
         "GradeClass"
     }
 
-    if forbidden_features.intersection(
-        set(FEATURE_NAMES)
-    ):
-
+    if forbidden_features.intersection(FEATURE_NAMES):
         raise ValueError(
-            "Data leakage detected. "
-            "StudentID, GPA and GradeClass "
-            "cannot be model features."
+            "Data leakage detected. StudentID, GPA, and "
+            "GradeClass must not be model input features."
         )
 
     return df
@@ -208,176 +232,69 @@ def load_training_data():
 
 def get_classification_models():
 
-    models = {
-
+    return {
         "Logistic Regression": {
-
-            "model": Pipeline(
-                [
-                    (
-                        "scaler",
-                        StandardScaler()
-                    ),
-
-                    (
-                        "model",
-                        LogisticRegression(
-                            max_iter=2000,
-                            class_weight="balanced",
-                            random_state=42
-                        )
-                    )
-                ]
-            ),
-
+            "model": Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", LogisticRegression(
+                    max_iter=2000,
+                    class_weight="balanced",
+                    random_state=42
+                ))
+            ]),
             "params": {
-
                 "model__C": [
-                    0.1,
-                    0.5,
-                    1.0,
-                    2.0,
-                    5.0
+                    0.1, 0.5, 1.0, 2.0, 5.0
                 ]
-
             },
-
             "iterations": 5
-
         },
 
-
         "Random Forest": {
-
             "model": RandomForestClassifier(
                 random_state=42,
                 class_weight="balanced",
                 n_jobs=1
             ),
-
             "params": {
-
-                "n_estimators": [
-                    150,
-                    250,
-                    350
-                ],
-
-                "max_depth": [
-                    None,
-                    10,
-                    15,
-                    20
-                ],
-
-                "min_samples_split": [
-                    2,
-                    5
-                ],
-
-                "min_samples_leaf": [
-                    1,
-                    2
-                ],
-
-                "max_features": [
-                    "sqrt",
-                    "log2"
-                ]
-
+                "n_estimators": [150, 250, 350],
+                "max_depth": [None, 10, 15, 20],
+                "min_samples_split": [2, 5],
+                "min_samples_leaf": [1, 2],
+                "max_features": ["sqrt", "log2"]
             },
-
             "iterations": 8
-
         },
 
-
         "Extra Trees": {
-
             "model": ExtraTreesClassifier(
                 random_state=42,
                 class_weight="balanced",
                 n_jobs=1
             ),
-
             "params": {
-
-                "n_estimators": [
-                    150,
-                    250,
-                    350
-                ],
-
-                "max_depth": [
-                    None,
-                    10,
-                    15,
-                    20
-                ],
-
-                "min_samples_split": [
-                    2,
-                    5
-                ],
-
-                "min_samples_leaf": [
-                    1,
-                    2
-                ],
-
-                "max_features": [
-                    "sqrt",
-                    "log2"
-                ]
-
+                "n_estimators": [150, 250, 350],
+                "max_depth": [None, 10, 15, 20],
+                "min_samples_split": [2, 5],
+                "min_samples_leaf": [1, 2],
+                "max_features": ["sqrt", "log2"]
             },
-
             "iterations": 8
-
         },
 
-
         "Gradient Boosting": {
-
             "model": GradientBoostingClassifier(
                 random_state=42
             ),
-
             "params": {
-
-                "n_estimators": [
-                    75,
-                    100,
-                    150,
-                    200
-                ],
-
-                "learning_rate": [
-                    0.03,
-                    0.05,
-                    0.1
-                ],
-
-                "max_depth": [
-                    2,
-                    3,
-                    4
-                ],
-
-                "subsample": [
-                    0.8,
-                    1.0
-                ]
-
+                "n_estimators": [75, 100, 150, 200],
+                "learning_rate": [0.03, 0.05, 0.1],
+                "max_depth": [2, 3, 4],
+                "subsample": [0.8, 1.0]
             },
-
             "iterations": 8
-
         }
-
     }
-
-    return models
 
 
 # ============================================================
@@ -386,171 +303,69 @@ def get_classification_models():
 
 def get_regression_models():
 
-    models = {
-
+    return {
         "Linear Regression": {
-
-            "model": Pipeline(
-                [
-                    (
-                        "scaler",
-                        StandardScaler()
-                    ),
-
-                    (
-                        "model",
-                        LinearRegression()
-                    )
-                ]
-            ),
-
+            "model": Pipeline([
+                ("scaler", StandardScaler()),
+                ("model", LinearRegression())
+            ]),
             "params": {},
-
             "iterations": 1
-
         },
 
-
         "Random Forest Regressor": {
-
             "model": RandomForestRegressor(
                 random_state=42,
                 n_jobs=1
             ),
-
             "params": {
-
-                "n_estimators": [
-                    150,
-                    250,
-                    350
-                ],
-
-                "max_depth": [
-                    None,
-                    10,
-                    15,
-                    20
-                ],
-
-                "min_samples_split": [
-                    2,
-                    5
-                ],
-
-                "min_samples_leaf": [
-                    1,
-                    2
-                ],
-
-                "max_features": [
-                    1.0,
-                    "sqrt"
-                ]
-
+                "n_estimators": [150, 250, 350],
+                "max_depth": [None, 10, 15, 20],
+                "min_samples_split": [2, 5],
+                "min_samples_leaf": [1, 2],
+                "max_features": [1.0, "sqrt"]
             },
-
             "iterations": 8
-
         },
 
-
         "Extra Trees Regressor": {
-
             "model": ExtraTreesRegressor(
                 random_state=42,
                 n_jobs=1
             ),
-
             "params": {
-
-                "n_estimators": [
-                    150,
-                    250,
-                    350
-                ],
-
-                "max_depth": [
-                    None,
-                    10,
-                    15,
-                    20
-                ],
-
-                "min_samples_split": [
-                    2,
-                    5
-                ],
-
-                "min_samples_leaf": [
-                    1,
-                    2
-                ],
-
-                "max_features": [
-                    1.0,
-                    "sqrt"
-                ]
-
+                "n_estimators": [150, 250, 350],
+                "max_depth": [None, 10, 15, 20],
+                "min_samples_split": [2, 5],
+                "min_samples_leaf": [1, 2],
+                "max_features": [1.0, "sqrt"]
             },
-
             "iterations": 8
-
         },
 
-
         "Gradient Boosting Regressor": {
-
             "model": GradientBoostingRegressor(
                 random_state=42
             ),
-
             "params": {
-
-                "n_estimators": [
-                    75,
-                    100,
-                    150,
-                    200
-                ],
-
-                "learning_rate": [
-                    0.03,
-                    0.05,
-                    0.1
-                ],
-
-                "max_depth": [
-                    2,
-                    3,
-                    4
-                ],
-
-                "subsample": [
-                    0.8,
-                    1.0
-                ]
-
+                "n_estimators": [75, 100, 150, 200],
+                "learning_rate": [0.03, 0.05, 0.1],
+                "max_depth": [2, 3, 4],
+                "subsample": [0.8, 1.0]
             },
-
             "iterations": 8
-
         }
-
     }
 
-    return models
-
 
 # ============================================================
-# CLASSIFICATION CROSS VALIDATION
+# HYPERPARAMETER TUNING
 # ============================================================
 
-def classification_cross_validation(
-    model,
-    X,
-    y
-):
+def tune_classifier(name, config, X, y):
+
+    model = config["model"]
+    parameters = config["params"]
 
     cv = StratifiedKFold(
         n_splits=5,
@@ -558,86 +373,35 @@ def classification_cross_validation(
         random_state=42
     )
 
-    scoring = {
+    if not parameters:
+        model.fit(X, y)
+        return model, {}, None
 
-        "accuracy":
-            "accuracy",
-
-        "balanced_accuracy":
-            "balanced_accuracy",
-
-        "macro_f1":
-            "f1_macro",
-
-        "weighted_f1":
-            "f1_weighted"
-
-    }
-
-    results = cross_validate(
-        model,
-        X,
-        y,
+    search = RandomizedSearchCV(
+        estimator=model,
+        param_distributions=parameters,
+        n_iter=config["iterations"],
+        scoring="f1_macro",
         cv=cv,
-        scoring=scoring,
+        random_state=42,
         n_jobs=1,
-        return_train_score=False
+        refit=True,
+        verbose=0
     )
 
-    return {
+    search.fit(X, y)
 
-        "cv_accuracy": float(
-            np.mean(
-                results[
-                    "test_accuracy"
-                ]
-            )
-        ),
-
-        "cv_accuracy_std": float(
-            np.std(
-                results[
-                    "test_accuracy"
-                ]
-            )
-        ),
-
-        "cv_balanced_accuracy": float(
-            np.mean(
-                results[
-                    "test_balanced_accuracy"
-                ]
-            )
-        ),
-
-        "cv_macro_f1": float(
-            np.mean(
-                results[
-                    "test_macro_f1"
-                ]
-            )
-        ),
-
-        "cv_weighted_f1": float(
-            np.mean(
-                results[
-                    "test_weighted_f1"
-                ]
-            )
-        )
-
-    }
+    return (
+        search.best_estimator_,
+        search.best_params_,
+        float(search.best_score_)
+    )
 
 
-# ============================================================
-# REGRESSION CROSS VALIDATION
-# ============================================================
+def tune_regressor(name, config, X, y):
 
-def regression_cross_validation(
-    model,
-    X,
-    y
-):
+    model = config["model"]
+    parameters = config["params"]
 
     cv = KFold(
         n_splits=5,
@@ -645,69 +409,111 @@ def regression_cross_validation(
         random_state=42
     )
 
-    scoring = {
+    if not parameters:
+        model.fit(X, y)
+        return model, {}, None
 
-        "mae":
-            "neg_mean_absolute_error",
+    search = RandomizedSearchCV(
+        estimator=model,
+        param_distributions=parameters,
+        n_iter=config["iterations"],
+        scoring="neg_root_mean_squared_error",
+        cv=cv,
+        random_state=42,
+        n_jobs=1,
+        refit=True,
+        verbose=0
+    )
 
-        "mse":
-            "neg_mean_squared_error",
+    search.fit(X, y)
 
-        "r2":
-            "r2"
+    return (
+        search.best_estimator_,
+        search.best_params_,
+        float(search.best_score_)
+    )
 
-    }
+
+# ============================================================
+# CLASSIFICATION CROSS-VALIDATION
+# ============================================================
+
+def classification_cross_validation(model, X, y):
+
+    cv = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42
+    )
 
     results = cross_validate(
         model,
         X,
         y,
         cv=cv,
-        scoring=scoring,
+        scoring={
+            "accuracy": "accuracy",
+            "balanced_accuracy": "balanced_accuracy",
+            "macro_f1": "f1_macro",
+            "weighted_f1": "f1_weighted"
+        },
         n_jobs=1,
         return_train_score=False
     )
 
-    cv_mae = -np.mean(
-        results[
-            "test_mae"
-        ]
+    return {
+        "cv_accuracy": float(
+            np.mean(results["test_accuracy"])
+        ),
+        "cv_accuracy_std": float(
+            np.std(results["test_accuracy"])
+        ),
+        "cv_balanced_accuracy": float(
+            np.mean(results["test_balanced_accuracy"])
+        ),
+        "cv_macro_f1": float(
+            np.mean(results["test_macro_f1"])
+        ),
+        "cv_weighted_f1": float(
+            np.mean(results["test_weighted_f1"])
+        )
+    }
+
+
+# ============================================================
+# REGRESSION CROSS-VALIDATION
+# ============================================================
+
+def regression_cross_validation(model, X, y):
+
+    cv = KFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42
     )
 
-    cv_mse = -np.mean(
-        results[
-            "test_mse"
-        ]
+    results = cross_validate(
+        model,
+        X,
+        y,
+        cv=cv,
+        scoring={
+            "mae": "neg_mean_absolute_error",
+            "mse": "neg_mean_squared_error",
+            "r2": "r2"
+        },
+        n_jobs=1,
+        return_train_score=False
     )
 
-    cv_rmse = np.sqrt(
-        cv_mse
-    )
-
-    cv_r2 = np.mean(
-        results[
-            "test_r2"
-        ]
-    )
+    cv_mae = -np.mean(results["test_mae"])
+    cv_mse = -np.mean(results["test_mse"])
 
     return {
-
-        "cv_mae": float(
-            cv_mae
-        ),
-
-        "cv_mse": float(
-            cv_mse
-        ),
-
-        "cv_rmse": float(
-            cv_rmse
-        ),
-
-        "cv_r2": float(
-            cv_r2
-        )
-
+        "cv_mae": float(cv_mae),
+        "cv_mse": float(cv_mse),
+        "cv_rmse": float(np.sqrt(max(0.0, cv_mse))),
+        "cv_r2": float(np.mean(results["test_r2"]))
     }
 
 
@@ -715,195 +521,106 @@ def regression_cross_validation(
 # CLASSIFICATION EVALUATION
 # ============================================================
 
-def evaluate_classifier(
-    model,
-    X,
-    y
-):
+def evaluate_classifier(model, X, y):
 
-    predictions = model.predict(
-        X
-    )
+    predictions = model.predict(X)
 
-    metrics = {
+    labels = sorted(y.unique().tolist())
 
+    return {
         "accuracy": float(
-            accuracy_score(
-                y,
-                predictions
-            )
+            accuracy_score(y, predictions)
         ),
-
         "balanced_accuracy": float(
-            balanced_accuracy_score(
-                y,
-                predictions
-            )
+            balanced_accuracy_score(y, predictions)
         ),
-
         "macro_precision": float(
             precision_score(
-                y,
-                predictions,
+                y, predictions,
+                labels=labels,
                 average="macro",
                 zero_division=0
             )
         ),
-
         "macro_recall": float(
             recall_score(
-                y,
-                predictions,
+                y, predictions,
+                labels=labels,
                 average="macro",
                 zero_division=0
             )
         ),
-
         "macro_f1": float(
             f1_score(
-                y,
-                predictions,
+                y, predictions,
+                labels=labels,
                 average="macro",
                 zero_division=0
             )
         ),
-
         "weighted_f1": float(
             f1_score(
-                y,
-                predictions,
+                y, predictions,
                 average="weighted",
                 zero_division=0
             )
-        )
-
-    }
-
-    labels = sorted(
-        pd.Series(
-            y
-        ).unique().tolist()
-    )
-
-    metrics[
-        "per_class_precision"
-    ] = [
-        float(value)
-        for value in precision_score(
-            y,
-            predictions,
-            labels=labels,
-            average=None,
-            zero_division=0
-        )
-    ]
-
-    metrics[
-        "per_class_recall"
-    ] = [
-        float(value)
-        for value in recall_score(
-            y,
-            predictions,
-            labels=labels,
-            average=None,
-            zero_division=0
-        )
-    ]
-
-    metrics[
-        "per_class_f1"
-    ] = [
-        float(value)
-        for value in f1_score(
-            y,
-            predictions,
-            labels=labels,
-            average=None,
-            zero_division=0
-        )
-    ]
-
-    metrics[
-        "confusion_matrix"
-    ] = (
-        confusion_matrix(
-            y,
-            predictions,
-            labels=labels
-        ).tolist()
-    )
-
-    metrics[
-        "class_labels"
-    ] = [
-
-        float(label)
-        if isinstance(
-            label,
-            (
-                int,
-                float,
-                np.integer,
-                np.floating
+        ),
+        "per_class_precision": [
+            float(value)
+            for value in precision_score(
+                y, predictions,
+                labels=labels,
+                average=None,
+                zero_division=0
             )
-        )
-        else str(label)
-
-        for label in labels
-
-    ]
-
-    return metrics
+        ],
+        "per_class_recall": [
+            float(value)
+            for value in recall_score(
+                y, predictions,
+                labels=labels,
+                average=None,
+                zero_division=0
+            )
+        ],
+        "per_class_f1": [
+            float(value)
+            for value in f1_score(
+                y, predictions,
+                labels=labels,
+                average=None,
+                zero_division=0
+            )
+        ],
+        "confusion_matrix": confusion_matrix(
+            y, predictions,
+            labels=labels
+        ).tolist(),
+        "class_labels": [
+            int(label) for label in labels
+        ]
+    }
 
 
 # ============================================================
 # REGRESSION EVALUATION
 # ============================================================
 
-def evaluate_regressor(
-    model,
-    X,
-    y
-):
+def evaluate_regressor(model, X, y):
 
-    predictions = model.predict(
-        X
-    )
+    predictions = model.predict(X)
 
-    mse = mean_squared_error(
-        y,
-        predictions
-    )
-
-    rmse = np.sqrt(
-        mse
-    )
+    mse = mean_squared_error(y, predictions)
 
     return {
-
         "mae": float(
-            mean_absolute_error(
-                y,
-                predictions
-            )
+            mean_absolute_error(y, predictions)
         ),
-
-        "mse": float(
-            mse
-        ),
-
-        "rmse": float(
-            rmse
-        ),
-
+        "mse": float(mse),
+        "rmse": float(np.sqrt(max(0.0, mse))),
         "r2": float(
-            r2_score(
-                y,
-                predictions
-            )
+            r2_score(y, predictions)
         )
-
     }
 
 
@@ -911,230 +628,31 @@ def evaluate_regressor(
 # FEATURE IMPORTANCE
 # ============================================================
 
-def get_feature_importance(
-    model,
-    feature_names
-):
+def get_feature_importance(model, feature_names):
 
     estimator = model
 
-    if isinstance(
-        model,
-        Pipeline
-    ):
+    if isinstance(model, Pipeline):
+        estimator = model.named_steps["model"]
 
-        estimator = model.named_steps[
-            "model"
-        ]
+    if hasattr(estimator, "feature_importances_"):
+        values = estimator.feature_importances_
 
-    # Tree models
-    if hasattr(
-        estimator,
-        "feature_importances_"
-    ):
-
-        values = (
-            estimator.feature_importances_
-        )
-
-        return {
-
-            feature: float(
-                value
-            )
-
-            for feature, value
-            in zip(
-                feature_names,
-                values
-            )
-
-        }
-
-    # Logistic Regression
-    if hasattr(
-        estimator,
-        "coef_"
-    ):
-
-        coefficients = np.abs(
-            estimator.coef_
-        )
+    elif hasattr(estimator, "coef_"):
+        coefficients = np.abs(estimator.coef_)
 
         if coefficients.ndim == 2:
-
-            values = np.mean(
-                coefficients,
-                axis=0
-            )
-
+            values = np.mean(coefficients, axis=0)
         else:
-
             values = coefficients
 
-        return {
+    else:
+        return {}
 
-            feature: float(
-                value
-            )
-
-            for feature, value
-            in zip(
-                feature_names,
-                values
-            )
-
-        }
-
-    return {}
-
-
-# ============================================================
-# TUNE CLASSIFIER
-# ============================================================
-
-def tune_classifier(
-    name,
-    config,
-    X,
-    y
-):
-
-    model = config[
-        "model"
-    ]
-
-    parameters = config[
-        "params"
-    ]
-
-    iterations = config[
-        "iterations"
-    ]
-
-    if not parameters:
-
-        model.fit(
-            X,
-            y
-        )
-
-        return (
-            model,
-            {},
-            None
-        )
-
-    search = RandomizedSearchCV(
-
-        estimator=model,
-
-        param_distributions=parameters,
-
-        n_iter=iterations,
-
-        scoring="f1_macro",
-
-        cv=StratifiedKFold(
-            n_splits=5,
-            shuffle=True,
-            random_state=42
-        ),
-
-        random_state=42,
-
-        n_jobs=1,
-
-        refit=True,
-
-        verbose=0
-
-    )
-
-    search.fit(
-        X,
-        y
-    )
-
-    return (
-        search.best_estimator_,
-        search.best_params_,
-        search.best_score_
-    )
-
-
-# ============================================================
-# TUNE REGRESSOR
-# ============================================================
-
-def tune_regressor(
-    name,
-    config,
-    X,
-    y
-):
-
-    model = config[
-        "model"
-    ]
-
-    parameters = config[
-        "params"
-    ]
-
-    iterations = config[
-        "iterations"
-    ]
-
-    if not parameters:
-
-        model.fit(
-            X,
-            y
-        )
-
-        return (
-            model,
-            {},
-            None
-        )
-
-    search = RandomizedSearchCV(
-
-        estimator=model,
-
-        param_distributions=parameters,
-
-        n_iter=iterations,
-
-        scoring="neg_root_mean_squared_error",
-
-        cv=KFold(
-            n_splits=5,
-            shuffle=True,
-            random_state=42
-        ),
-
-        random_state=42,
-
-        n_jobs=1,
-
-        refit=True,
-
-        verbose=0
-
-    )
-
-    search.fit(
-        X,
-        y
-    )
-
-    return (
-        search.best_estimator_,
-        search.best_params_,
-        search.best_score_
-    )
+    return {
+        feature: float(value)
+        for feature, value in zip(feature_names, values)
+    }
 
 
 # ============================================================
@@ -1143,309 +661,161 @@ def tune_regressor(
 
 def train_all_models():
 
-    print()
-    print("=" * 70)
+    print("\n" + "=" * 70)
     print("ACADEMIC PERFORMANCE ANALYTICS")
-    print("FAST HYPERPARAMETER TUNING")
+    print("GPA SCALE: 1-10")
     print("=" * 70)
-    print()
-
-    # ========================================================
-    # LOAD DATA
-    # ========================================================
 
     df = load_training_data()
 
-    print(
-        f"Dataset shape: {df.shape}"
-    )
+    print(f"\nDataset shape: {df.shape}")
+    print(f"Model features: {len(FEATURE_NAMES)}")
+    print("StudentID excluded: YES")
+    print("GPA leakage into GradeClass: NO")
 
-    print(
-        f"Model features: "
-        f"{len(FEATURE_NAMES)}"
-    )
+    X = df[FEATURE_NAMES].copy()
+    y_classification = df[CLASSIFICATION_TARGET].copy()
+    y_regression = df[REGRESSION_TARGET].copy()
 
-    print(
-        "StudentID excluded: YES"
-    )
+    # --------------------------------------------------------
+    # Classification
+    # --------------------------------------------------------
 
-    print(
-        "GPA leakage into GradeClass: NO"
-    )
-
-    print()
-
-    X = df[
-        FEATURE_NAMES
-    ].copy()
-
-    y_classification = df[
-        CLASSIFICATION_TARGET
-    ].copy()
-
-    y_regression = df[
-        REGRESSION_TARGET
-    ].copy()
-
-    # ========================================================
-    # CLASSIFICATION
-    # ========================================================
-
-    print()
-    print("-" * 70)
+    print("\n" + "-" * 70)
     print("CLASSIFICATION MODEL TUNING")
     print("-" * 70)
-
-    classification_models = (
-        get_classification_models()
-    )
 
     classification_results = {}
 
     best_classifier = None
-
     best_classifier_name = None
-
     best_classifier_score = -np.inf
 
-    for name, config in (
-        classification_models.items()
-    ):
+    for name, config in get_classification_models().items():
 
-        print()
-        print(
-            f"Training: {name}"
-        )
+        print(f"\nTraining: {name}")
 
-        print(
-            "  Randomized search..."
-        )
-
-        (
-            model,
-            best_params,
-            tuning_score
-        ) = tune_classifier(
+        model, best_params, tuning_score = tune_classifier(
             name,
             config,
             X,
             y_classification
         )
 
-        print(
-            "  Cross-validation..."
+        cv_metrics = classification_cross_validation(
+            model,
+            X,
+            y_classification
         )
 
-        cv_metrics = (
-            classification_cross_validation(
-                model,
-                X,
-                y_classification
-            )
-        )
-
-        train_metrics = (
-            evaluate_classifier(
-                model,
-                X,
-                y_classification
-            )
+        train_metrics = evaluate_classifier(
+            model,
+            X,
+            y_classification
         )
 
         combined = {
-
             **cv_metrics,
-
             **train_metrics,
-
-            "best_params":
-                best_params,
-
-            "tuning_score":
-                (
-                    float(tuning_score)
-                    if tuning_score is not None
-                    else None
-                )
-
+            "best_params": best_params,
+            "tuning_score": tuning_score
         }
 
-        classification_results[
-            name
-        ] = combined
+        classification_results[name] = combined
 
         print(
-            f"  CV Accuracy: "
-            f"{cv_metrics['cv_accuracy']:.4f}"
+            f"CV Accuracy: {cv_metrics['cv_accuracy']:.4f}"
         )
-
         print(
-            f"  CV Macro F1: "
-            f"{cv_metrics['cv_macro_f1']:.4f}"
+            f"CV Macro F1: {cv_metrics['cv_macro_f1']:.4f}"
         )
-
         print(
-            f"  CV Balanced Accuracy: "
+            f"CV Balanced Accuracy: "
             f"{cv_metrics['cv_balanced_accuracy']:.4f}"
         )
 
-        print(
-            f"  Best Parameters: "
-            f"{best_params}"
-        )
-
-        score = cv_metrics[
-            "cv_macro_f1"
-        ]
+        score = cv_metrics["cv_macro_f1"]
 
         if score > best_classifier_score:
+            best_classifier_score = score
+            best_classifier = model
+            best_classifier_name = name
 
-            best_classifier_score = (
-                score
-            )
+    # --------------------------------------------------------
+    # Regression
+    # --------------------------------------------------------
 
-            best_classifier = (
-                model
-            )
-
-            best_classifier_name = (
-                name
-            )
-
-    # ========================================================
-    # REGRESSION
-    # ========================================================
-
-    print()
+    print("\n" + "-" * 70)
+    print("GPA REGRESSION MODEL TUNING")
     print("-" * 70)
-    print("REGRESSION MODEL TUNING")
-    print("-" * 70)
-
-    regression_models = (
-        get_regression_models()
-    )
 
     regression_results = {}
 
     best_regressor = None
-
     best_regressor_name = None
-
     best_regressor_score = np.inf
 
-    for name, config in (
-        regression_models.items()
-    ):
+    for name, config in get_regression_models().items():
 
-        print()
-        print(
-            f"Training: {name}"
-        )
+        print(f"\nTraining: {name}")
 
-        print(
-            "  Randomized search..."
-        )
-
-        (
-            model,
-            best_params,
-            tuning_score
-        ) = tune_regressor(
+        model, best_params, tuning_score = tune_regressor(
             name,
             config,
             X,
             y_regression
         )
 
-        print(
-            "  Cross-validation..."
+        cv_metrics = regression_cross_validation(
+            model,
+            X,
+            y_regression
         )
 
-        cv_metrics = (
-            regression_cross_validation(
-                model,
-                X,
-                y_regression
-            )
-        )
-
-        train_metrics = (
-            evaluate_regressor(
-                model,
-                X,
-                y_regression
-            )
+        train_metrics = evaluate_regressor(
+            model,
+            X,
+            y_regression
         )
 
         combined = {
-
             **cv_metrics,
-
             **train_metrics,
-
-            "best_params":
-                best_params,
-
-            "tuning_score":
-                (
-                    float(tuning_score)
-                    if tuning_score is not None
-                    else None
-                )
-
+            "best_params": best_params,
+            "tuning_score": tuning_score
         }
 
-        regression_results[
-            name
-        ] = combined
+        regression_results[name] = combined
 
         print(
-            f"  CV MAE: "
-            f"{cv_metrics['cv_mae']:.4f}"
+            f"CV MAE: {cv_metrics['cv_mae']:.4f}"
         )
-
         print(
-            f"  CV RMSE: "
-            f"{cv_metrics['cv_rmse']:.4f}"
+            f"CV RMSE: {cv_metrics['cv_rmse']:.4f}"
         )
-
         print(
-            f"  CV R2: "
-            f"{cv_metrics['cv_r2']:.4f}"
+            f"CV R2: {cv_metrics['cv_r2']:.4f}"
         )
 
-        print(
-            f"  Best Parameters: "
-            f"{best_params}"
-        )
-
-        score = cv_metrics[
-            "cv_rmse"
-        ]
+        score = cv_metrics["cv_rmse"]
 
         if score < best_regressor_score:
+            best_regressor_score = score
+            best_regressor = model
+            best_regressor_name = name
 
-            best_regressor_score = (
-                score
-            )
-
-            best_regressor = (
-                model
-            )
-
-            best_regressor_name = (
-                name
-            )
-
-    # ========================================================
-    # FEATURE IMPORTANCE
-    # ========================================================
-
-    feature_importance = (
-        get_feature_importance(
-            best_classifier,
-            FEATURE_NAMES
+    if best_classifier is None or best_regressor is None:
+        raise RuntimeError(
+            "Training did not produce valid models."
         )
+
+    # --------------------------------------------------------
+    # Feature importance
+    # --------------------------------------------------------
+
+    feature_importance = get_feature_importance(
+        best_classifier,
+        FEATURE_NAMES
     )
 
     feature_importance = dict(
@@ -1456,221 +826,113 @@ def train_all_models():
         )
     )
 
-    # ========================================================
-    # SAVE BEST CLASSIFIER
-    # ========================================================
-
-    classifier_path = os.path.join(
-        MODELS_DIR,
-        "academic_performance_model.pkl"
-    )
+    # --------------------------------------------------------
+    # Save trained models
+    # --------------------------------------------------------
 
     joblib.dump(
         best_classifier,
-        classifier_path
-    )
-
-    # ========================================================
-    # SAVE BEST REGRESSOR
-    # ========================================================
-
-    regressor_path = os.path.join(
-        MODELS_DIR,
-        "academic_gpa_model.pkl"
+        CLASSIFIER_PATH
     )
 
     joblib.dump(
         best_regressor,
-        regressor_path
-    )
-
-    # ========================================================
-    # SAVE FEATURE NAMES
-    # ========================================================
-
-    feature_path = os.path.join(
-        MODELS_DIR,
-        "feature_names.pkl"
+        REGRESSOR_PATH
     )
 
     joblib.dump(
         FEATURE_NAMES,
-        feature_path
+        FEATURE_PATH
     )
 
-    # ========================================================
-    # BEST CLASSIFIER METRICS
-    # ========================================================
+    # --------------------------------------------------------
+    # Evaluation report
+    # --------------------------------------------------------
 
-    best_classifier_metrics = (
-        classification_results[
-            best_classifier_name
-        ]
-    )
-
-    # ========================================================
-    # SAVE EVALUATION JSON
-    # ========================================================
+    best_classifier_metrics = classification_results[
+        best_classifier_name
+    ]
 
     evaluation_results = {
-
         "dataset": {
-
-            "rows": int(
-                len(df)
-            ),
-
-            "columns": int(
-                len(df.columns)
-            ),
-
-            "features":
-                FEATURE_NAMES,
-
-            "classification_target":
-                CLASSIFICATION_TARGET,
-
-            "regression_target":
-                REGRESSION_TARGET
-
+            "rows": int(len(df)),
+            "columns": int(len(df.columns)),
+            "features": FEATURE_NAMES,
+            "classification_target": CLASSIFICATION_TARGET,
+            "regression_target": REGRESSION_TARGET
         },
+
+        "gpa_scale": "1-10",
 
         "data_leakage_protection": {
-
-            "student_id_excluded":
-                True,
-
-            "gpa_excluded_from_gradeclass":
-                True,
-
-            "gradeclass_excluded_from_features":
-                True
-
+            "student_id_excluded": True,
+            "gpa_excluded_from_gradeclass": True,
+            "gradeclass_excluded_from_features": True
         },
 
-        "best_classification_model":
-            best_classifier_name,
+        "best_classification_model": best_classifier_name,
+        "best_regression_model": best_regressor_name,
 
-        "best_regression_model":
-            best_regressor_name,
+        # Aliases for compatibility with earlier scripts.
+        "best_classifier": best_classifier_name,
+        "best_regressor": best_regressor_name,
 
-        "classification_models":
-            classification_results,
+        "best_classifier_macro_f1": float(
+            best_classifier_score
+        ),
 
-        "regression_models":
-            regression_results,
+        "best_regressor_mae": float(
+            regression_results[best_regressor_name]["cv_mae"]
+        ),
 
-        "feature_importance":
-            feature_importance,
+        "classification_models": classification_results,
+        "regression_models": regression_results,
 
-        "confusion_matrix":
-            best_classifier_metrics[
-                "confusion_matrix"
-            ],
+        "feature_importance": feature_importance,
 
-        "class_labels":
-            best_classifier_metrics[
-                "class_labels"
-            ]
+        "confusion_matrix": best_classifier_metrics[
+            "confusion_matrix"
+        ],
 
+        "class_labels": best_classifier_metrics[
+            "class_labels"
+        ]
     }
 
-    evaluation_path = os.path.join(
-        MODELS_DIR,
-        "model_evaluation_results.json"
-    )
-
     with open(
-        evaluation_path,
+        RESULTS_PATH,
         "w",
         encoding="utf-8"
     ) as file:
-
         json.dump(
             evaluation_results,
             file,
             indent=4
         )
 
-    # ========================================================
-    # FINAL SUMMARY
-    # ========================================================
+    # --------------------------------------------------------
+    # Final summary
+    # --------------------------------------------------------
 
-    print()
-    print("=" * 70)
+    print("\n" + "=" * 70)
     print("TRAINING COMPLETED")
     print("=" * 70)
 
-    print()
-
+    print(f"Best classifier: {best_classifier_name}")
     print(
-        f"Best Classifier: "
-        f"{best_classifier_name}"
+        f"CV Macro F1: {best_classifier_score:.4f}"
     )
 
+    print(f"Best regressor: {best_regressor_name}")
     print(
-        f"Best Classifier CV Accuracy: "
-        f"{classification_results[best_classifier_name]['cv_accuracy']:.4f}"
+        f"CV RMSE: {best_regressor_score:.4f}"
     )
 
-    print(
-        f"Best Classifier CV Macro F1: "
-        f"{classification_results[best_classifier_name]['cv_macro_f1']:.4f}"
-    )
-
-    print(
-        f"Best Classifier CV Balanced Accuracy: "
-        f"{classification_results[best_classifier_name]['cv_balanced_accuracy']:.4f}"
-    )
-
-    print()
-
-    print(
-        f"Best Regressor: "
-        f"{best_regressor_name}"
-    )
-
-    print(
-        f"Best Regressor CV RMSE: "
-        f"{regression_results[best_regressor_name]['cv_rmse']:.4f}"
-    )
-
-    print(
-        f"Best Regressor CV R2: "
-        f"{regression_results[best_regressor_name]['cv_r2']:.4f}"
-    )
-
-    print()
-
-    print(
-        "Saved classifier:"
-    )
-
-    print(
-        classifier_path
-    )
-
-    print()
-
-    print(
-        "Saved regressor:"
-    )
-
-    print(
-        regressor_path
-    )
-
-    print()
-
-    print(
-        "Saved evaluation results:"
-    )
-
-    print(
-        evaluation_path
-    )
-
-    print()
+    print("\nSaved model files:")
+    print(CLASSIFIER_PATH)
+    print(REGRESSOR_PATH)
+    print(FEATURE_PATH)
+    print(RESULTS_PATH)
 
     print("=" * 70)
 
@@ -1684,21 +946,12 @@ def train_all_models():
 if __name__ == "__main__":
 
     try:
-
         train_all_models()
 
+    except KeyboardInterrupt:
+        print("\nTraining interrupted by user.")
+
     except Exception as error:
-
-        print()
-        print("=" * 70)
-        print("TRAINING ERROR")
-        print("=" * 70)
-
-        print(
-            str(error)
-        )
-
-        print("=" * 70)
-        print()
-
+        print("\nTRAINING ERROR")
+        print(type(error).__name__ + ":", str(error))
         raise

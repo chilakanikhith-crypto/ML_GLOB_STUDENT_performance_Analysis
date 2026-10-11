@@ -1,10 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What-If Analysis | Academic Performance Analytics</title>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -12,7 +12,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
         }
 
         body {
@@ -21,171 +21,175 @@
         }
 
         header {
-            background: #111827;
+            background: linear-gradient(120deg, #111827, #1e3a8a);
             color: white;
-            padding: 22px 35px;
+            padding: 24px 35px;
         }
 
-        header h1 {
-            font-size: 26px;
-        }
-
-        header p {
-            margin-top: 6px;
-            color: #cbd5e1;
-        }
+        header h1 { font-size: 26px; }
+        header p { margin-top: 7px; color: #cbd5e1; }
 
         nav {
             background: white;
-            padding: 14px 35px;
+            padding: 15px 30px;
             border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
         }
 
         nav a {
             text-decoration: none;
             color: #374151;
-            margin-right: 22px;
+            font-size: 14px;
             font-weight: 600;
         }
 
-        nav a:hover {
-            color: #2563eb;
-        }
+        nav a:hover, nav a.active { color: #2563eb; }
 
         .container {
-            max-width: 1400px;
-            margin: 30px auto;
+            max-width: 1450px;
+            margin: 28px auto;
             padding: 0 20px;
         }
 
-        .intro {
+        .intro, .card {
             background: white;
             padding: 24px;
             border-radius: 14px;
             margin-bottom: 22px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+            border: 1px solid #edf0f5;
         }
 
-        .intro h2 {
-            margin-bottom: 8px;
-        }
+        .intro h2 { margin-bottom: 9px; }
 
         .intro p {
             color: #64748b;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 22px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            align-items: start;
         }
 
         .card h2 {
             margin-bottom: 18px;
-            color: #111827;
-        }
-
-        .section-title {
-            margin: 22px 0 12px;
-            font-size: 16px;
-            color: #374151;
+            font-size: 20px;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 15px;
         }
 
         .field {
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
         label {
             font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-weight: 650;
+            margin-bottom: 7px;
             color: #374151;
         }
 
-        input,
-        select {
-            padding: 10px 12px;
+        input, select {
+            width: 100%;
+            padding: 11px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             font-size: 14px;
             background: white;
+            color: #1f2937;
         }
 
-        input:focus,
-        select:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .scenario-note, .disclaimer {
+            padding: 14px;
+            border-radius: 9px;
+            margin-top: 18px;
+            font-size: 13px;
+            line-height: 1.65;
         }
 
         .scenario-note {
             background: #eff6ff;
             border-left: 4px solid #2563eb;
-            padding: 12px;
-            margin-top: 15px;
             color: #1e40af;
-            font-size: 13px;
-            line-height: 1.5;
         }
 
         .button-area {
             margin-top: 22px;
-            text-align: center;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         button {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 12px 28px;
+            padding: 12px 22px;
             border-radius: 9px;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 650;
             cursor: pointer;
         }
 
-        button:hover {
-            background: #1d4ed8;
+        button:hover:not(:disabled) { background: #1d4ed8; }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: #d1d5db;
+        }
+
+        #loading, #error {
+            display: none;
+            margin-top: 15px;
+            padding: 13px;
+            border-radius: 8px;
+            font-size: 14px;
         }
 
         #loading {
-            display: none;
-            margin-top: 15px;
             text-align: center;
             color: #64748b;
+            background: #f8fafc;
         }
 
         #error {
-            display: none;
-            margin-top: 15px;
-            padding: 12px;
             background: #fee2e2;
             color: #991b1b;
-            border-radius: 8px;
+            overflow-wrap: anywhere;
         }
 
-        #results {
-            display: none;
-            margin-top: 25px;
-        }
+        #results { display: none; margin-top: 24px; }
 
         .result-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 18px;
             margin-bottom: 20px;
         }
@@ -197,637 +201,664 @@
             border: 1px solid #e5e7eb;
         }
 
-        .result-box h3 {
-            margin-bottom: 15px;
-        }
+        .result-box h3 { margin-bottom: 14px; }
 
         .metric {
             display: flex;
             justify-content: space-between;
-            padding: 9px 0;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 11px 0;
             border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
         }
 
-        .metric:last-child {
-            border-bottom: none;
-        }
+        .metric:last-child { border-bottom: none; }
 
         .metric-value {
-            font-weight: bold;
+            font-weight: 700;
+            text-align: right;
         }
 
         .change-box {
             background: #f8fafc;
             border-radius: 12px;
+            border: 1px solid #e5e7eb;
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
-        .change-positive {
-            color: #15803d;
-            font-weight: bold;
-        }
-
-        .change-negative {
-            color: #dc2626;
-            font-weight: bold;
-        }
+        .change-positive { color: #15803d; font-weight: 700; }
+        .change-negative { color: #dc2626; font-weight: 700; }
+        .change-neutral { color: #64748b; font-weight: 700; }
 
         .chart-container {
-            height: 350px;
+            height: 340px;
+            position: relative;
         }
 
         .disclaimer {
-            margin-top: 20px;
             background: #fff7ed;
             border-left: 4px solid #f97316;
-            padding: 14px;
             color: #9a3412;
-            line-height: 1.5;
-            font-size: 13px;
+        }
+
+        .performance-pill {
+            display: inline-block;
+            border-radius: 20px;
+            padding: 5px 10px;
+            background: #e0e7ff;
+            color: #3730a3;
         }
 
         @media (max-width: 900px) {
-            .grid,
-            .result-grid {
-                grid-template-columns: 1fr;
-            }
+            .grid, .result-grid { grid-template-columns: 1fr; }
+        }
 
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            nav {
-                line-height: 2;
-            }
+        @media (max-width: 600px) {
+            header { padding: 20px; }
+            header h1 { font-size: 22px; }
+            nav { padding: 14px 18px; gap: 12px; }
+            .container { padding: 0 12px; margin-top: 16px; }
+            .intro, .card { padding: 17px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .button-area button { width: 100%; }
+            .metric { flex-direction: column; gap: 5px; }
+            .metric-value { text-align: left; }
         }
     </style>
 </head>
 
 <body>
-
 <header>
-    <h1>🎯 Academic Performance Analytics</h1>
+    <h1>🎓 Academic Performance Analytics</h1>
     <p>What-If Student Performance Analysis</p>
 </header>
 
 <nav>
-    <a href="/">Dashboard</a>
-    <a href="/students">Student Records</a>
-    <a href="/add-student">Add Student</a>
-    <a href="/model-lab">Model Lab</a>
-    <a href="/predict">Predict Student</a>
-    <a href="/what-if">What-If Analysis</a>
+    <a href="/">🏠 Dashboard</a>
+    <a href="/students">👨‍🎓 Student Records</a>
+    <a href="/add-student">➕ Add Student</a>
+    <a href="/model-lab">🧪 Model Lab</a>
+    <a href="/predict">🔮 Predict Student</a>
+    <a href="/what-if" class="active">🎯 What-If Analysis</a>
+    <a href="/retrain">🔄 Retrain Models</a>
+    <a href="/at-risk">⚠️ At-Risk Students</a>
 </nav>
 
-<div class="container">
-
-    <div class="intro">
+<main class="container">
+    <section class="intro">
         <h2>🔬 What-If Analysis</h2>
         <p>
-            Compare a student's current situation with a hypothetical scenario.
-            Change study time, absences, tutoring, parental support, and activities
+            Compare a baseline student with a hypothetical scenario. Change
+            study time, absences, tutoring, parental support, and activities
             to see how the trained machine-learning models respond.
         </p>
-    </div>
+    </section>
 
-    <div class="grid">
+    <form id="analysisForm">
+        <div class="grid">
+            <section class="card">
+                <h2>👤 Baseline Student</h2>
+                <div class="form-grid" id="baselineFields"></div>
+            </section>
 
-        <!-- BASELINE -->
-        <div class="card">
-            <h2>👤 Baseline Student</h2>
+            <section class="card">
+                <h2>🧪 What-If Scenario</h2>
+                <div class="form-grid" id="scenarioFields"></div>
 
-            <div class="form-grid">
-
-                <div class="field">
-                    <label>Age</label>
-                    <input type="number" id="base_Age" value="17" min="10" max="30">
+                <div class="scenario-note">
+                    💡 Change the scenario values to explore a hypothetical
+                    situation. The model compares the inputs; it does not
+                    establish that a particular change causes an outcome.
                 </div>
 
-                <div class="field">
-                    <label>Gender</label>
-                    <select id="base_Gender">
-                        <option value="0">Male</option>
-                        <option value="1">Female</option>
-                    </select>
+                <div class="button-area">
+                    <button type="submit" id="runButton">
+                        🔍 Run What-If Analysis
+                    </button>
+                    <button type="button" class="secondary" id="resetButton">
+                        ↺ Reset Values
+                    </button>
                 </div>
 
-                <div class="field">
-                    <label>Ethnicity</label>
-                    <input type="number" id="base_Ethnicity" value="0">
+                <div id="loading" role="status">
+                    ⏳ Running machine-learning models...
                 </div>
-
-                <div class="field">
-                    <label>Parental Education</label>
-                    <input type="number" id="base_ParentalEducation" value="2">
-                </div>
-
-                <div class="field">
-                    <label>Study Time Weekly</label>
-                    <input type="number" id="base_StudyTimeWeekly"
-                           value="10" min="0" step="0.1">
-                </div>
-
-                <div class="field">
-                    <label>Absences</label>
-                    <input type="number" id="base_Absences"
-                           value="5" min="0">
-                </div>
-
-                <div class="field">
-                    <label>Tutoring</label>
-                    <select id="base_Tutoring">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Parental Support</label>
-                    <input type="number" id="base_ParentalSupport"
-                           value="2">
-                </div>
-
-                <div class="field">
-                    <label>Extracurricular</label>
-                    <select id="base_Extracurricular">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Sports</label>
-                    <select id="base_Sports">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Music</label>
-                    <select id="base_Music">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Volunteering</label>
-                    <select id="base_Volunteering">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-            </div>
+                <div id="error" role="alert"></div>
+            </section>
         </div>
+    </form>
 
-
-        <!-- SCENARIO -->
+    <section id="results">
         <div class="card">
-            <h2>🧪 What-If Scenario</h2>
-
-            <div class="form-grid">
-
-                <div class="field">
-                    <label>Age</label>
-                    <input type="number" id="scenario_Age" value="17">
-                </div>
-
-                <div class="field">
-                    <label>Gender</label>
-                    <select id="scenario_Gender">
-                        <option value="0">Male</option>
-                        <option value="1">Female</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Ethnicity</label>
-                    <input type="number" id="scenario_Ethnicity" value="0">
-                </div>
-
-                <div class="field">
-                    <label>Parental Education</label>
-                    <input type="number" id="scenario_ParentalEducation" value="2">
-                </div>
-
-                <div class="field">
-                    <label>Study Time Weekly</label>
-                    <input type="number" id="scenario_StudyTimeWeekly"
-                           value="15" min="0" step="0.1">
-                </div>
-
-                <div class="field">
-                    <label>Absences</label>
-                    <input type="number" id="scenario_Absences"
-                           value="2" min="0">
-                </div>
-
-                <div class="field">
-                    <label>Tutoring</label>
-                    <select id="scenario_Tutoring">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Parental Support</label>
-                    <input type="number" id="scenario_ParentalSupport"
-                           value="3">
-                </div>
-
-                <div class="field">
-                    <label>Extracurricular</label>
-                    <select id="scenario_Extracurricular">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Sports</label>
-                    <select id="scenario_Sports">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Music</label>
-                    <select id="scenario_Music">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Volunteering</label>
-                    <select id="scenario_Volunteering">
-                        <option value="0">No</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-            </div>
-
-            <div class="scenario-note">
-                💡 Change the scenario values to represent a hypothetical
-                situation and compare it with the baseline student.
-            </div>
-
-            <div class="button-area">
-                <button onclick="runAnalysis()">
-                    🔍 Run What-If Analysis
-                </button>
-            </div>
-
-            <div id="loading">
-                ⏳ Running machine-learning models...
-            </div>
-
-            <div id="error"></div>
-        </div>
-
-    </div>
-
-
-    <!-- RESULTS -->
-    <div id="results">
-
-        <div class="card">
-
             <h2>📊 Analysis Results</h2>
 
             <div class="result-grid">
-
                 <div class="result-box">
                     <h3>👤 Baseline Prediction</h3>
-
                     <div class="metric">
                         <span>Predicted GPA</span>
-                        <span class="metric-value" id="baselineGPA">-</span>
+                        <span class="metric-value" id="baselineGPA">—</span>
                     </div>
-
                     <div class="metric">
                         <span>Grade Class</span>
-                        <span class="metric-value" id="baselineClass">-</span>
+                        <span class="metric-value" id="baselineClass">—</span>
                     </div>
-
                     <div class="metric">
                         <span>Performance</span>
-                        <span class="metric-value" id="baselinePerformance">-</span>
+                        <span class="metric-value" id="baselinePerformance">—</span>
                     </div>
                 </div>
-
 
                 <div class="result-box">
                     <h3>🧪 Scenario Prediction</h3>
-
                     <div class="metric">
                         <span>Predicted GPA</span>
-                        <span class="metric-value" id="scenarioGPA">-</span>
+                        <span class="metric-value" id="scenarioGPA">—</span>
                     </div>
-
                     <div class="metric">
                         <span>Grade Class</span>
-                        <span class="metric-value" id="scenarioClass">-</span>
+                        <span class="metric-value" id="scenarioClass">—</span>
                     </div>
-
                     <div class="metric">
                         <span>Performance</span>
-                        <span class="metric-value" id="scenarioPerformance">-</span>
+                        <span class="metric-value" id="scenarioPerformance">—</span>
                     </div>
                 </div>
-
             </div>
-
 
             <div class="change-box">
-
-                <h3>📈 Changes</h3>
-
+                <h3>📈 Difference Between Predictions</h3>
                 <div class="metric">
-                    <span>GPA Change</span>
-                    <span id="gpaChange">-</span>
+                    <span>Predicted GPA Change</span>
+                    <span class="metric-value" id="gpaChange">—</span>
                 </div>
-
                 <div class="metric">
                     <span>Grade Class Change</span>
-                    <span id="classChange">-</span>
+                    <span class="metric-value" id="classChange">—</span>
                 </div>
-
+                <p class="subtitle" style="margin-top: 12px; margin-bottom: 0;">
+                    A negative Grade Class change means the numeric class
+                    decreased. In this project, Grade Class 0 is the best
+                    category and Grade Class 4 is At Risk.
+                </p>
             </div>
 
-
-            <div class="card" style="box-shadow:none; padding:0;">
-
-                <h3 style="margin-bottom:15px;">
-                    📊 Baseline vs Scenario
-                </h3>
-
-                <div class="chart-container">
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-
+            <h3 style="margin-bottom: 15px;">📊 Baseline vs Scenario</h3>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
             </div>
-
 
             <div class="disclaimer">
-                ⚠️ <strong>Important:</strong>
-                This analysis shows how the trained machine-learning model
-                responds to hypothetical input changes. It does not prove
-                that changing a particular factor will actually cause a
-                student's GPA or performance to change.
+                ⚠️ <strong>Important:</strong> These are model predictions
+                based on the submitted input values. They are not guaranteed
+                outcomes and do not prove that any individual factor causes
+                a student's GPA or performance to change.
             </div>
-
         </div>
-
-    </div>
-
-</div>
-
+    </section>
+</main>
 
 <script>
+"use strict";
 
 const FEATURES = [
-    "Age",
-    "Gender",
-    "Ethnicity",
-    "ParentalEducation",
-    "StudyTimeWeekly",
-    "Absences",
-    "Tutoring",
-    "ParentalSupport",
-    "Extracurricular",
-    "Sports",
-    "Music",
-    "Volunteering"
+    {
+        name: "Age",
+        type: "number",
+        baseline: 17,
+        scenario: 17,
+        min: 10,
+        max: 30,
+        step: 1
+    },
+    {
+        name: "Gender",
+        type: "select",
+        options: [["0", "Male"], ["1", "Female"]],
+        baseline: "0",
+        scenario: "0"
+    },
+    {
+        name: "Ethnicity",
+        type: "number",
+        baseline: 0,
+        scenario: 0,
+        min: 0,
+        max: 10,
+        step: 1
+    },
+    {
+        name: "ParentalEducation",
+        label: "Parental Education",
+        type: "number",
+        baseline: 2,
+        scenario: 2,
+        min: 0,
+        max: 5,
+        step: 1
+    },
+    {
+        name: "StudyTimeWeekly",
+        label: "Study Time Weekly (hours)",
+        type: "number",
+        baseline: 10,
+        scenario: 15,
+        min: 0,
+        max: 168,
+        step: 0.5
+    },
+    {
+        name: "Absences",
+        type: "number",
+        baseline: 5,
+        scenario: 2,
+        min: 0,
+        max: 365,
+        step: 1
+    },
+    {
+        name: "Tutoring",
+        type: "select",
+        options: [["0", "No"], ["1", "Yes"]],
+        baseline: "0",
+        scenario: "1"
+    },
+    {
+        name: "ParentalSupport",
+        label: "Parental Support",
+        type: "number",
+        baseline: 2,
+        scenario: 3,
+        min: 0,
+        max: 5,
+        step: 1
+    },
+    {
+        name: "Extracurricular",
+        type: "select",
+        options: [["0", "No"], ["1", "Yes"]],
+        baseline: "0",
+        scenario: "1"
+    },
+    {
+        name: "Sports",
+        type: "select",
+        options: [["0", "No"], ["1", "Yes"]],
+        baseline: "0",
+        scenario: "1"
+    },
+    {
+        name: "Music",
+        type: "select",
+        options: [["0", "No"], ["1", "Yes"]],
+        baseline: "0",
+        scenario: "0"
+    },
+    {
+        name: "Volunteering",
+        type: "select",
+        options: [["0", "No"], ["1", "Yes"]],
+        baseline: "0",
+        scenario: "0"
+    }
 ];
 
+const GRADE_NAMES = {
+    0: "Excellent",
+    1: "Very Good",
+    2: "Good",
+    3: "Needs Improvement",
+    4: "At Risk"
+};
 
-function getStudentData(prefix) {
-
-    const data = {};
-
-    FEATURES.forEach(feature => {
-
-        const element =
-            document.getElementById(prefix + "_" + feature);
-
-        let value = Number(element.value);
-
-        data[feature] = value;
-    });
-
-    return data;
-}
-
-
-function formatNumber(value) {
-
-    if (value === null || value === undefined) {
-        return "-";
-    }
-
-    return Number(value).toFixed(2);
-}
-
-
-async function runAnalysis() {
-
-    const loading = document.getElementById("loading");
-    const errorBox = document.getElementById("error");
-    const results = document.getElementById("results");
-
-    errorBox.style.display = "none";
-    results.style.display = "none";
-    loading.style.display = "block";
-
-    const baseline = getStudentData("base");
-    const scenario = getStudentData("scenario");
-
-    try {
-
-        const response = await fetch("/api/what-if", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                baseline: baseline,
-                scenario: scenario
-            })
-
-        });
-
-
-        const data = await response.json();
-
-        loading.style.display = "none";
-
-
-        if (!response.ok || !data.success) {
-
-            throw new Error(
-                data.error || "Unable to perform analysis."
-            );
-
-        }
-
-
-        const analysis = data.analysis;
-
-
-        // Baseline
-        document.getElementById("baselineGPA").textContent =
-            formatNumber(analysis.baseline.predicted_gpa);
-
-        document.getElementById("baselineClass").textContent =
-            analysis.baseline.grade_class;
-
-        document.getElementById("baselinePerformance").textContent =
-            analysis.baseline.performance_category;
-
-
-        // Scenario
-        document.getElementById("scenarioGPA").textContent =
-            formatNumber(analysis.scenario.predicted_gpa);
-
-        document.getElementById("scenarioClass").textContent =
-            analysis.scenario.grade_class;
-
-        document.getElementById("scenarioPerformance").textContent =
-            analysis.scenario.performance_category;
-
-
-        // GPA change
-        const gpaChange =
-            Number(analysis.gpa_change);
-
-        const gpaElement =
-            document.getElementById("gpaChange");
-
-        gpaElement.textContent =
-            (gpaChange >= 0 ? "+" : "") +
-            formatNumber(gpaChange);
-
-        gpaElement.className =
-            gpaChange >= 0
-                ? "change-positive"
-                : "change-negative";
-
-
-        // Class change
-        const classChange =
-            Number(analysis.grade_class_change);
-
-        const classElement =
-            document.getElementById("classChange");
-
-        classElement.textContent =
-            (classChange >= 0 ? "+" : "") +
-            classChange.toFixed(0);
-
-        classElement.className =
-            classChange >= 0
-                ? "change-positive"
-                : "change-negative";
-
-
-        results.style.display = "block";
-
-
-        createComparisonChart(
-            analysis.baseline.predicted_gpa,
-            analysis.scenario.predicted_gpa
-        );
-
-    }
-
-    catch (error) {
-
-        loading.style.display = "none";
-
-        errorBox.textContent =
-            "❌ " + error.message;
-
-        errorBox.style.display = "block";
-    }
-}
-
+const baselineContainer = document.getElementById("baselineFields");
+const scenarioContainer = document.getElementById("scenarioFields");
+const form = document.getElementById("analysisForm");
+const runButton = document.getElementById("runButton");
+const resetButton = document.getElementById("resetButton");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
+const results = document.getElementById("results");
 
 let comparisonChart = null;
 
+function createField(feature, prefix, value) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "field";
+
+    const id = `${prefix}_${feature.name}`;
+    const label = document.createElement("label");
+    label.htmlFor = id;
+    label.textContent = feature.label || feature.name;
+
+    let input;
+
+    if (feature.type === "select") {
+        input = document.createElement("select");
+
+        for (const [optionValue, optionLabel] of feature.options) {
+            const option = document.createElement("option");
+            option.value = optionValue;
+            option.textContent = optionLabel;
+            input.appendChild(option);
+        }
+    } else {
+        input = document.createElement("input");
+        input.type = "number";
+        input.min = feature.min;
+        input.max = feature.max;
+        input.step = feature.step;
+        input.required = true;
+    }
+
+    input.id = id;
+    input.name = id;
+    input.value = value;
+
+    wrapper.append(label, input);
+    return wrapper;
+}
+
+function renderFields() {
+    for (const feature of FEATURES) {
+        baselineContainer.appendChild(
+            createField(feature, "base", feature.baseline)
+        );
+
+        scenarioContainer.appendChild(
+            createField(feature, "scenario", feature.scenario)
+        );
+    }
+}
+
+function getStudentData(prefix) {
+    const student = {};
+
+    for (const feature of FEATURES) {
+        const element = document.getElementById(
+            `${prefix}_${feature.name}`
+        );
+
+        const value = Number(element.value);
+
+        if (!Number.isFinite(value)) {
+            throw new Error(`Please enter a valid value for ${feature.label || feature.name}.`);
+        }
+
+        if (
+            feature.type === "number" &&
+            (value < feature.min || value > feature.max)
+        ) {
+            throw new Error(
+                `${feature.label || feature.name} must be between ${feature.min} and ${feature.max}.`
+            );
+        }
+
+        if (feature.step === 1 && !Number.isInteger(value)) {
+            throw new Error(`${feature.label || feature.name} must be a whole number.`);
+        }
+
+        student[feature.name] = value;
+    }
+
+    return student;
+}
+
+function formatNumber(value) {
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number.toFixed(2) : "—";
+}
+
+function displayValue(id, value) {
+    document.getElementById(id).textContent =
+        value === null || value === undefined || value === ""
+            ? "—"
+            : String(value);
+}
+
+function gradeDescription(value) {
+    if (value === null || value === undefined || value === "") {
+        return "—";
+    }
+
+    const number = Number(value);
+
+    if (Number.isInteger(number) && GRADE_NAMES[number]) {
+        return `${number} - ${GRADE_NAMES[number]}`;
+    }
+
+    return String(value);
+}
+
+function setChangeStyle(element, value) {
+    element.classList.remove(
+        "change-positive",
+        "change-negative",
+        "change-neutral"
+    );
+
+    if (value > 0) {
+        element.classList.add("change-positive");
+    } else if (value < 0) {
+        element.classList.add("change-negative");
+    } else {
+        element.classList.add("change-neutral");
+    }
+}
+
+function showError(message) {
+    errorBox.textContent = "❌ " + message;
+    errorBox.style.display = "block";
+}
+
+function hideError() {
+    errorBox.textContent = "";
+    errorBox.style.display = "none";
+}
+
+function readPrediction(prediction, label) {
+    if (!prediction || typeof prediction !== "object") {
+        throw new Error(`The server did not return a valid ${label} prediction.`);
+    }
+
+    const gpa = Number(prediction.predicted_gpa);
+
+    if (!Number.isFinite(gpa)) {
+        throw new Error(`The ${label} prediction is missing a valid predicted_gpa.`);
+    }
+
+    return {
+        gpa,
+        gradeClass: prediction.grade_class,
+        performance: prediction.performance_category
+    };
+}
+
+function updateResults(analysis) {
+    const baseline = readPrediction(analysis.baseline, "baseline");
+    const scenario = readPrediction(analysis.scenario, "scenario");
+
+    displayValue("baselineGPA", formatNumber(baseline.gpa));
+    displayValue("baselineClass", gradeDescription(baseline.gradeClass));
+    displayValue("baselinePerformance", baseline.performance);
+
+    displayValue("scenarioGPA", formatNumber(scenario.gpa));
+    displayValue("scenarioClass", gradeDescription(scenario.gradeClass));
+    displayValue("scenarioPerformance", scenario.performance);
+
+    const gpaChange = Number.isFinite(Number(analysis.gpa_change))
+        ? Number(analysis.gpa_change)
+        : scenario.gpa - baseline.gpa;
+
+    const gpaElement = document.getElementById("gpaChange");
+    gpaElement.textContent =
+        `${gpaChange > 0 ? "+" : ""}${gpaChange.toFixed(2)}`;
+    setChangeStyle(gpaElement, gpaChange);
+
+    const baselineClass = Number(baseline.gradeClass);
+    const scenarioClass = Number(scenario.gradeClass);
+
+    const classChange = Number.isFinite(Number(analysis.grade_class_change))
+        ? Number(analysis.grade_class_change)
+        : scenarioClass - baselineClass;
+
+    const classElement = document.getElementById("classChange");
+
+    if (Number.isFinite(classChange)) {
+        const prefix = classChange > 0 ? "+" : "";
+        classElement.textContent = `${prefix}${classChange.toFixed(0)}`;
+        setChangeStyle(classElement, -classChange);
+    } else {
+        classElement.textContent = "—";
+        setChangeStyle(classElement, 0);
+    }
+
+    createComparisonChart(baseline.gpa, scenario.gpa);
+    results.style.display = "block";
+}
+
+async function runAnalysis(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    hideError();
+    results.style.display = "none";
+
+    let baseline;
+    let scenario;
+
+    try {
+        baseline = getStudentData("base");
+        scenario = getStudentData("scenario");
+    } catch (error) {
+        showError(error.message);
+        return;
+    }
+
+    loading.style.display = "block";
+    runButton.disabled = true;
+    resetButton.disabled = true;
+
+    try {
+        const response = await fetch("/api/what-if", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({ baseline, scenario })
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+            throw new Error(
+                "The server did not return JSON. Verify the Flask /api/what-if endpoint."
+            );
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || data.success === false) {
+            throw new Error(
+                data.error || data.message || "Unable to perform the analysis."
+            );
+        }
+
+        if (!data.analysis) {
+            throw new Error("The server response is missing the analysis results.");
+        }
+
+        updateResults(data.analysis);
+
+    } catch (error) {
+        showError(error.message || "An unexpected error occurred.");
+    } finally {
+        loading.style.display = "none";
+        runButton.disabled = false;
+        resetButton.disabled = false;
+    }
+}
 
 function createComparisonChart(baselineGPA, scenarioGPA) {
-
-    const canvas =
-        document.getElementById("comparisonChart");
+    const canvas = document.getElementById("comparisonChart");
 
     if (comparisonChart) {
         comparisonChart.destroy();
     }
 
-
     comparisonChart = new Chart(canvas, {
-
         type: "bar",
-
         data: {
-
-            labels: [
-                "Baseline GPA",
-                "Scenario GPA"
-            ],
-
+            labels: ["Baseline GPA", "Scenario GPA"],
             datasets: [{
-
                 label: "Predicted GPA",
-
-                data: [
-                    Number(baselineGPA),
-                    Number(scenarioGPA)
-                ]
-
+                data: [baselineGPA, scenarioGPA],
+                backgroundColor: [
+                    "rgba(37, 99, 235, 0.75)",
+                    "rgba(22, 163, 74, 0.75)"
+                ],
+                borderColor: ["#2563eb", "#16a34a"],
+                borderWidth: 1,
+                borderRadius: 8
             }]
-
         },
-
         options: {
-
             responsive: true,
-
             maintainAspectRatio: false,
-
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "top"
+                },
+                tooltip: {
+                    callbacks: {
+                        label(context) {
+                            return `Predicted GPA: ${Number(context.raw).toFixed(2)}`;
+                        }
+                    }
+                }
+            },
             scales: {
-
                 y: {
-
                     beginAtZero: true,
-
-                    max: 4,
-
+                    max: 10,
                     title: {
                         display: true,
-                        text: "GPA"
+                        text: "Predicted GPA (1–10 scale)"
                     }
-
                 }
-
             }
-
         }
-
     });
 }
 
-</script>
+function resetValues() {
+    for (const feature of FEATURES) {
+        document.getElementById(`base_${feature.name}`).value =
+            feature.baseline;
 
+        document.getElementById(`scenario_${feature.name}`).value =
+            feature.scenario;
+    }
+
+    hideError();
+    results.style.display = "none";
+
+    if (comparisonChart) {
+        comparisonChart.destroy();
+        comparisonChart = null;
+    }
+}
+
+renderFields();
+
+form.addEventListener("submit", runAnalysis);
+resetButton.addEventListener("click", resetValues);
+</script>
 </body>
 </html>

@@ -1,325 +1,150 @@
-import pandas as pd
+from data_utils import (
+    get_feature_columns,
+    get_grade_label
+)
 
-from data_utils import get_feature_columns
 from prediction import predict_student
 
 
-def calculate_risk_level(predicted_gpa, predicted_grade_class, student_data):
-    """
-    Determine student risk level using ML prediction
-    and behavioral indicators.
+def analyze_student(student):
+    """Calculate a model-based academic risk assessment."""
 
-    This is a screening indicator, not a causal or
-    guaranteed academic judgment.
-    """
+    features = get_feature_columns()
 
-    score = 0
-    reasons = []
-
-    study_time = float(student_data.get("StudyTimeWeekly", 0))
-    absences = float(student_data.get("Absences", 0))
-    tutoring = int(student_data.get("Tutoring", 0))
-    parental_support = int(student_data.get("ParentalSupport", 0))
-
-    # -------------------------------------------------
-    # Predicted GPA
-    # -------------------------------------------------
-
-    if predicted_gpa < 2.0:
-        score += 4
-        reasons.append("Predicted GPA is below 2.0")
-
-    elif predicted_gpa < 2.5:
-        score += 2
-        reasons.append("Predicted GPA is below 2.5")
-
-    elif predicted_gpa < 3.0:
-        score += 1
-        reasons.append("Predicted GPA is below 3.0")
-
-    # -------------------------------------------------
-    # Predicted Grade Class
-    # -------------------------------------------------
-
-    if predicted_grade_class == 4:
-        score += 3
-        reasons.append("Predicted Grade Class indicates high academic risk")
-
-    elif predicted_grade_class == 3:
-        score += 2
-        reasons.append("Predicted Grade Class indicates improvement is needed")
-
-    # -------------------------------------------------
-    # Study Time
-    # -------------------------------------------------
-
-    if study_time < 5:
-        score += 2
-        reasons.append("Low weekly study time")
-
-    elif study_time < 10:
-        score += 1
-        reasons.append("Study time could be increased")
-
-    # -------------------------------------------------
-    # Absences
-    # -------------------------------------------------
-
-    if absences >= 15:
-        score += 3
-        reasons.append("High number of absences")
-
-    elif absences >= 10:
-        score += 2
-        reasons.append("Attendance needs attention")
-
-    elif absences >= 5:
-        score += 1
-        reasons.append("Some attendance improvement may help")
-
-    # -------------------------------------------------
-    # Tutoring
-    # -------------------------------------------------
-
-    if tutoring == 0 and predicted_gpa < 2.5:
-        score += 1
-        reasons.append("Academic tutoring/support may be useful")
-
-    # -------------------------------------------------
-    # Parental Support
-    # -------------------------------------------------
-
-    if parental_support == 0:
-        score += 1
-        reasons.append("Additional academic support may be beneficial")
-
-    # -------------------------------------------------
-    # Final Risk Level
-    # -------------------------------------------------
-
-    if score >= 7:
-        risk_level = "High"
-
-    elif score >= 4:
-        risk_level = "Medium"
-
-    else:
-        risk_level = "Low"
-
-    return risk_level, score, reasons
-
-
-def analyze_student_risk(row):
-    """
-    Analyze one student using the trained ML models.
-    """
-
-    feature_columns = get_feature_columns()
-
-    student_data = {}
-
-    for column in feature_columns:
-        value = row[column]
-
-        if pd.isna(value):
-            value = 0
-
-        student_data[column] = value
-
-    # -------------------------------------------------
-    # ML prediction
-    # -------------------------------------------------
+    student_data = {
+        feature: float(student[feature])
+        for feature in features
+    }
 
     prediction = predict_student(student_data)
 
-    predicted_gpa = float(prediction["predicted_gpa"])
-    predicted_grade_class = int(prediction["predicted_grade_class"])
-
-    # -------------------------------------------------
-    # Risk calculation
-    # -------------------------------------------------
-
-    risk_level, risk_score, reasons = calculate_risk_level(
-        predicted_gpa,
-        predicted_grade_class,
-        student_data
+    predicted_gpa = float(
+        prediction["predicted_gpa"]
     )
 
+    predicted_class = int(
+        prediction["predicted_grade_class"]
+    )
+
+    reasons = []
+
+    # Determine initial risk level from model predictions.
+    if predicted_gpa < 5.5 or predicted_class == 4:
+        risk_level = "High"
+        risk_score = 85
+
+    elif predicted_gpa < 6.625 or predicted_class == 3:
+        risk_level = "Medium"
+        risk_score = 55
+
+    else:
+        risk_level = "Low"
+        risk_score = 20
+
+    # Additional screening signals.
+    study_time = float(student["StudyTimeWeekly"])
+    absences = float(student["Absences"])
+    tutoring = int(student["Tutoring"])
+    parental_support = int(student["ParentalSupport"])
+
+    if study_time < 5:
+        reasons.append("Low weekly study time")
+        risk_score += 5
+
+    if absences >= 10:
+        reasons.append("High number of absences")
+        risk_score += 5
+
+    if tutoring == 0:
+        reasons.append("No tutoring reported")
+
+    if parental_support <= 1:
+        reasons.append("Low parental support reported")
+
+    if predicted_gpa < 5.5:
+        reasons.append("Predicted GPA is below 5.5")
+
+    if predicted_class == 4:
+        reasons.append("Predicted GradeClass is At Risk")
+
+    risk_score = min(100, max(0, risk_score))
+
     return {
-        "student_id": int(row["StudentID"]),
+        "student_id": int(student["StudentID"]),
         "predicted_gpa": round(predicted_gpa, 2),
-        "predicted_grade_class": predicted_grade_class,
-        "performance": prediction["performance"],
+        "predicted_grade_class": predicted_class,
+        "performance_category": get_grade_label(
+            predicted_class
+        ),
         "risk_level": risk_level,
-        "risk_score": risk_score,
+        "risk_score": int(risk_score),
         "reasons": reasons,
-        "study_time": float(row["StudyTimeWeekly"]),
-        "absences": int(row["Absences"]),
-        "tutoring": int(row["Tutoring"]),
-        "parental_support": int(row["ParentalSupport"])
+        "gpa_scale": "1-10"
     }
 
 
 def analyze_all_students(df):
-    """
-    Analyze every student in the dataset.
-    """
+    """Assess all students in the dataset."""
 
     results = []
 
-    for _, row in df.iterrows():
-
+    for _, student in df.iterrows():
         try:
-            result = analyze_student_risk(row)
-            results.append(result)
-
-        except Exception as error:
-            print(
-                f"Risk analysis failed for StudentID "
-                f"{row.get('StudentID', 'Unknown')}: {error}"
+            results.append(
+                analyze_student(student)
             )
+
+        except Exception as exc:
+            results.append({
+                "student_id": int(student["StudentID"]),
+                "risk_level": "Unknown",
+                "risk_score": 0,
+                "reasons": [
+                    f"Unable to analyze student: {exc}"
+                ]
+            })
 
     return results
 
 
 def get_risk_summary(results):
-    """
-    Generate summary statistics from risk results.
-    """
+    """Summarize the risk levels across students."""
 
     total = len(results)
 
     high = sum(
-        1 for student in results
-        if student["risk_level"] == "High"
+        item["risk_level"] == "High"
+        for item in results
     )
 
     medium = sum(
-        1 for student in results
-        if student["risk_level"] == "Medium"
+        item["risk_level"] == "Medium"
+        for item in results
     )
 
     low = sum(
-        1 for student in results
-        if student["risk_level"] == "Low"
+        item["risk_level"] == "Low"
+        for item in results
     )
 
-    high_percentage = (
-        round((high / total) * 100, 2)
-        if total > 0
-        else 0
+    unknown = sum(
+        item["risk_level"] == "Unknown"
+        for item in results
     )
 
-    medium_percentage = (
-        round((medium / total) * 100, 2)
-        if total > 0
-        else 0
-    )
-
-    low_percentage = (
-        round((low / total) * 100, 2)
-        if total > 0
-        else 0
-    )
+    def percentage(count):
+        return round(
+            (count / total) * 100, 2
+        ) if total else 0
 
     return {
         "total_students": total,
         "high_risk": high,
         "medium_risk": medium,
         "low_risk": low,
-        "high_percentage": high_percentage,
-        "medium_percentage": medium_percentage,
-        "low_percentage": low_percentage
+        "unknown_risk": unknown,
+        "high_percentage": percentage(high),
+        "medium_percentage": percentage(medium),
+        "low_percentage": percentage(low),
+        "unknown_percentage": percentage(unknown)
     }
-
-
-if __name__ == "__main__":
-
-    from data_utils import load_data
-
-    print("=" * 70)
-    print("AT-RISK STUDENT DETECTION")
-    print("=" * 70)
-
-    try:
-
-        df = load_data()
-
-        print(f"\nDataset loaded: {len(df)} students")
-
-        results = analyze_all_students(df)
-
-        summary = get_risk_summary(results)
-
-        print("\n" + "=" * 70)
-        print("RISK SUMMARY")
-        print("=" * 70)
-
-        print(
-            f"Total Students : "
-            f"{summary['total_students']}"
-        )
-
-        print(
-            f"High Risk      : "
-            f"{summary['high_risk']} "
-            f"({summary['high_percentage']}%)"
-        )
-
-        print(
-            f"Medium Risk    : "
-            f"{summary['medium_risk']} "
-            f"({summary['medium_percentage']}%)"
-        )
-
-        print(
-            f"Low Risk       : "
-            f"{summary['low_risk']} "
-            f"({summary['low_percentage']}%)"
-        )
-
-        print("\n" + "=" * 70)
-        print("SAMPLE RESULTS")
-        print("=" * 70)
-
-        for student in results[:10]:
-
-            print(
-                f"\nStudent ID: {student['student_id']}"
-            )
-
-            print(
-                f"Predicted GPA: "
-                f"{student['predicted_gpa']}"
-            )
-
-            print(
-                f"Grade Class: "
-                f"{student['predicted_grade_class']}"
-            )
-
-            print(
-                f"Risk Level: "
-                f"{student['risk_level']}"
-            )
-
-            print(
-                f"Risk Score: "
-                f"{student['risk_score']}"
-            )
-
-            if student["reasons"]:
-
-                print("Reasons:")
-
-                for reason in student["reasons"]:
-                    print(f"  - {reason}")
-
-        print("\n" + "=" * 70)
-        print("RISK ANALYSIS COMPLETED")
-        print("=" * 70)
-
-    except Exception as error:
-
-        print("\nERROR:")
-        print(error)

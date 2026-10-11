@@ -1,9 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Student Records | Academic Performance Analytics</title>
 
     <style>
@@ -11,7 +11,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
         }
 
         body {
@@ -20,23 +20,23 @@
         }
 
         header {
-            background: #111827;
+            background: linear-gradient(120deg, #111827, #1e3a8a);
             color: white;
-            padding: 22px 35px;
+            padding: 24px 35px;
         }
 
         header h1 {
-            font-size: 26px;
+            font-size: 27px;
         }
 
         header p {
-            margin-top: 6px;
+            margin-top: 7px;
             color: #cbd5e1;
         }
 
         nav {
             background: white;
-            padding: 15px 35px;
+            padding: 15px 30px;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             flex-wrap: wrap;
@@ -47,16 +47,18 @@
             text-decoration: none;
             color: #374151;
             font-weight: 600;
+            font-size: 14px;
         }
 
-        nav a:hover {
+        nav a:hover,
+        nav a.active {
             color: #2563eb;
         }
 
         .container {
-            max-width: 1500px;
-            margin: 30px auto;
-            padding: 0 20px;
+            max-width: 1600px;
+            margin: 28px auto;
+            padding: 0 22px;
         }
 
         .card {
@@ -64,65 +66,79 @@
             border-radius: 14px;
             padding: 24px;
             margin-bottom: 22px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+            border: 1px solid #edf0f5;
         }
 
         .card h2 {
+            font-size: 20px;
             margin-bottom: 8px;
         }
 
         .subtitle {
             color: #64748b;
+            font-size: 14px;
             margin-bottom: 22px;
+            line-height: 1.6;
         }
 
         .filters {
             display: grid;
-            grid-template-columns:
-                repeat(4, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 17px;
         }
 
         .field {
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
         label {
             font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-weight: 650;
+            margin-bottom: 7px;
             color: #374151;
         }
 
         input,
         select {
-            padding: 10px 12px;
+            width: 100%;
+            padding: 11px 12px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             font-size: 14px;
             background: white;
+            color: #1f2937;
         }
 
         input:focus,
         select:focus {
             outline: none;
             border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
         .button-row {
             display: flex;
-            gap: 10px;
-            margin-top: 18px;
             flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         button {
             border: none;
             border-radius: 8px;
-            padding: 10px 18px;
-            font-weight: 600;
+            padding: 11px 17px;
+            font-weight: 650;
             cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .primary {
@@ -130,7 +146,7 @@
             color: white;
         }
 
-        .primary:hover {
+        .primary:hover:not(:disabled) {
             background: #1d4ed8;
         }
 
@@ -139,7 +155,7 @@
             color: #374151;
         }
 
-        .secondary:hover {
+        .secondary:hover:not(:disabled) {
             background: #d1d5db;
         }
 
@@ -148,12 +164,12 @@
             color: white;
         }
 
-        .download:hover {
+        .download:hover:not(:disabled) {
             background: #166534;
         }
 
         .count {
-            margin-bottom: 15px;
+            margin: 12px 0 16px;
             color: #64748b;
             font-size: 14px;
         }
@@ -167,37 +183,38 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1400px;
+            min-width: 1450px;
         }
 
         th {
             background: #f8fafc;
             color: #374151;
-            font-size: 13px;
-            padding: 13px 10px;
+            font-size: 12px;
+            padding: 14px 11px;
             text-align: center;
             border-bottom: 1px solid #e5e7eb;
             white-space: nowrap;
         }
 
         td {
-            padding: 11px 10px;
+            padding: 12px 10px;
             text-align: center;
             border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
             white-space: nowrap;
         }
 
-        tr:hover {
+        tbody tr:hover {
             background: #f8fafc;
         }
 
         .grade-badge {
             display: inline-block;
             min-width: 28px;
-            padding: 5px 8px;
-            border-radius: 15px;
-            font-weight: bold;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 750;
         }
 
         .grade-0 {
@@ -216,7 +233,7 @@
         }
 
         .grade-3 {
-            background: #fed7aa;
+            background: #ffedd5;
             color: #9a3412;
         }
 
@@ -225,32 +242,54 @@
             color: #991b1b;
         }
 
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-
+        .empty,
         .loading {
             text-align: center;
-            padding: 35px;
+            padding: 38px 15px;
             color: #64748b;
         }
 
         .error {
             display: none;
-            background: #fee2e2;
+            background: #fef2f2;
             color: #991b1b;
-            border-left: 5px solid #ef4444;
+            border-left: 4px solid #ef4444;
             padding: 14px;
             border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .table-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .scale-note {
+            background: #eff6ff;
+            color: #1e40af;
+            border-radius: 8px;
+            padding: 11px 13px;
+            font-size: 13px;
             margin-bottom: 18px;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
             .filters {
-                grid-template-columns:
-                    repeat(2, 1fr);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            header {
+                padding: 22px;
+            }
+
+            nav {
+                padding: 14px 22px;
+                gap: 15px;
             }
         }
 
@@ -261,817 +300,492 @@
 
             .container {
                 padding: 0 12px;
+                margin-top: 16px;
+            }
+
+            .card {
+                padding: 17px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .button-row button {
+                width: 100%;
             }
         }
     </style>
 </head>
 
 <body>
-
 <header>
-
     <h1>🎓 Academic Performance Analytics</h1>
-
-    <p>
-        Student Records Management
-    </p>
-
+    <p>Student Records Management & Academic Insights</p>
 </header>
 
-
 <nav>
-
-    <a href="/">
-        🏠 Dashboard
-    </a>
-
-    <a href="/students">
-        👨‍🎓 Student Records
-    </a>
-
-    <a href="/add-student">
-        ➕ Add Student
-    </a>
-
-    <a href="/model-lab">
-        🧪 Model Lab
-    </a>
-
-    <a href="/predict">
-        🔮 Predict Student
-    </a>
-
-    <a href="/what-if">
-        🎯 What-If Analysis
-    </a>
-
-    <a href="/retrain">
-        🔄 Retrain Models
-    </a>
-
+    <a href="/">🏠 Dashboard</a>
+    <a href="/students" class="active">👨‍🎓 Student Records</a>
+    <a href="/add-student">➕ Add Student</a>
+    <a href="/model-lab">🧪 Model Lab</a>
+    <a href="/predict">🔮 Predict Student</a>
+    <a href="/what-if">🎯 What-If Analysis</a>
+    <a href="/retrain">🔄 Retrain Models</a>
+    <a href="/at-risk">⚠️ At-Risk Students</a>
 </nav>
 
+<main class="container">
 
-<div class="container">
-
-
-    <!-- =====================================================
-         FILTER CARD
-         ===================================================== -->
-
-    <div class="card">
-
-        <h2>
-            🔎 Search & Filter Students
-        </h2>
-
+    <section class="card">
+        <h2>🔎 Search & Filter Students</h2>
         <p class="subtitle">
-            Search student records and filter the dataset
-            using academic and demographic information.
+            Search student records using Student ID and narrow the results
+            by gender, grade class, tutoring, GPA and attendance.
         </p>
 
-
-        <div class="filters">
-
-
-            <div class="field">
-
-                <label>
-                    Student ID
-                </label>
-
-                <input
-                    type="text"
-                    id="search"
-                    placeholder="Enter Student ID"
-                >
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Gender
-                </label>
-
-                <select id="gender">
-
-                    <option value="">
-                        All
-                    </option>
-
-                    <option value="0">
-                        Male
-                    </option>
-
-                    <option value="1">
-                        Female
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Grade Class
-                </label>
-
-                <select id="grade_class">
-
-                    <option value="">
-                        All
-                    </option>
-
-                    <option value="0">
-                        Grade Class 0
-                    </option>
-
-                    <option value="1">
-                        Grade Class 1
-                    </option>
-
-                    <option value="2">
-                        Grade Class 2
-                    </option>
-
-                    <option value="3">
-                        Grade Class 3
-                    </option>
-
-                    <option value="4">
-                        Grade Class 4
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Tutoring
-                </label>
-
-                <select id="tutoring">
-
-                    <option value="">
-                        All
-                    </option>
-
-                    <option value="0">
-                        No
-                    </option>
-
-                    <option value="1">
-                        Yes
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Minimum GPA
-                </label>
-
-                <input
-                    type="number"
-                    id="min_gpa"
-                    min="0"
-                    max="4"
-                    step="0.1"
-                    placeholder="0.0"
-                >
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Maximum GPA
-                </label>
-
-                <input
-                    type="number"
-                    id="max_gpa"
-                    min="0"
-                    max="4"
-                    step="0.1"
-                    placeholder="4.0"
-                >
-
-            </div>
-
-
-            <div class="field">
-
-                <label>
-                    Maximum Absences
-                </label>
-
-                <input
-                    type="number"
-                    id="max_absences"
-                    min="0"
-                    placeholder="Example: 10"
-                >
-
-            </div>
-
-
+        <div class="scale-note">
+            📊 GPA filters use the updated <strong>1–10 scale</strong>.
+            Grade Class 0 represents Excellent and Grade Class 4 represents At Risk.
         </div>
 
+        <form id="filterForm">
+            <div class="filters">
 
-        <div class="button-row">
+                <div class="field">
+                    <label for="search">Student ID</label>
+                    <input
+                        type="text"
+                        id="search"
+                        placeholder="Enter Student ID"
+                    >
+                </div>
 
-            <button
-                class="primary"
-                onclick="loadStudents()">
+                <div class="field">
+                    <label for="gender">Gender</label>
+                    <select id="gender">
+                        <option value="">All genders</option>
+                        <option value="0">Male</option>
+                        <option value="1">Female</option>
+                    </select>
+                </div>
 
-                🔎 Apply Filters
+                <div class="field">
+                    <label for="grade_class">Grade Class</label>
+                    <select id="grade_class">
+                        <option value="">All grade classes</option>
+                        <option value="0">0 - Excellent</option>
+                        <option value="1">1 - Very Good</option>
+                        <option value="2">2 - Good</option>
+                        <option value="3">3 - Needs Improvement</option>
+                        <option value="4">4 - At Risk</option>
+                    </select>
+                </div>
 
-            </button>
+                <div class="field">
+                    <label for="tutoring">Tutoring</label>
+                    <select id="tutoring">
+                        <option value="">All</option>
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
 
+                <div class="field">
+                    <label for="min_gpa">Minimum GPA</label>
+                    <input
+                        type="number"
+                        id="min_gpa"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        placeholder="1.0"
+                    >
+                </div>
 
-            <button
-                class="secondary"
-                onclick="clearFilters()">
+                <div class="field">
+                    <label for="max_gpa">Maximum GPA</label>
+                    <input
+                        type="number"
+                        id="max_gpa"
+                        min="1"
+                        max="10"
+                        step="0.1"
+                        placeholder="10.0"
+                    >
+                </div>
 
-                ✖ Clear Filters
+                <div class="field">
+                    <label for="max_absences">Maximum Absences</label>
+                    <input
+                        type="number"
+                        id="max_absences"
+                        min="0"
+                        step="1"
+                        placeholder="Example: 10"
+                    >
+                </div>
 
-            </button>
+            </div>
 
+            <div class="button-row">
+                <button type="submit" class="primary" id="applyButton">
+                    🔎 Apply Filters
+                </button>
 
-            <button
-                class="download"
-                onclick="downloadStudents()">
+                <button type="button" class="secondary" id="clearButton">
+                    ✖ Clear Filters
+                </button>
 
-                📥 Download CSV
+                <button type="button" class="download" id="downloadButton">
+                    📥 Download CSV
+                </button>
+            </div>
+        </form>
+    </section>
 
-            </button>
-
+    <section class="card">
+        <div class="table-top">
+            <h2>👨‍🎓 Student Dataset</h2>
+            <span id="resultSummary" class="count">Loading records...</span>
         </div>
 
-    </div>
+        <div id="error" class="error" role="alert"></div>
 
-
-    <!-- =====================================================
-         STUDENT TABLE
-         ===================================================== -->
-
-    <div class="card">
-
-        <h2>
-            👨‍🎓 Student Dataset
-        </h2>
-
-        <p
-            class="count"
-            id="studentCount">
-
-            Loading students...
-
-        </p>
-
-
-        <div
-            id="error"
-            class="error">
-        </div>
-
-
-        <div
-            id="loading"
-            class="loading">
-
+        <div id="loading" class="loading">
             ⏳ Loading student records...
-
         </div>
 
-
-        <div
-            id="tableContainer"
-            class="table-wrapper"
-            style="display:none;">
-
+        <div id="tableContainer" class="table-wrapper" hidden>
             <table>
-
                 <thead>
-
                     <tr>
-
                         <th>Student ID</th>
-
                         <th>Age</th>
-
                         <th>Gender</th>
-
                         <th>Ethnicity</th>
-
                         <th>Parental Education</th>
-
-                        <th>Study Time Weekly</th>
-
+                        <th>Study Time / Week</th>
                         <th>Absences</th>
-
                         <th>Tutoring</th>
-
                         <th>Parental Support</th>
-
                         <th>Extracurricular</th>
-
                         <th>Sports</th>
-
                         <th>Music</th>
-
                         <th>Volunteering</th>
-
-                        <th>GPA</th>
-
+                        <th>GPA / 10</th>
                         <th>Grade Class</th>
-
                     </tr>
-
                 </thead>
-
-
-                <tbody id="studentTableBody">
-
-                </tbody>
-
+                <tbody id="studentTableBody"></tbody>
             </table>
-
         </div>
 
-
-        <div
-            id="empty"
-            class="empty"
-            style="display:none;">
-
-            🔍 No students match the selected filters.
-
+        <div id="empty" class="empty" hidden>
+            🔍 No student records match the selected filters.
         </div>
-
-    </div>
-
-</div>
-
+    </section>
+</main>
 
 <script>
-
-
-function getFilterParameters() {
-
-    const params =
-        new URLSearchParams();
-
-
-    const search =
-        document.getElementById(
-            "search"
-        ).value.trim();
-
-    const gender =
-        document.getElementById(
-            "gender"
-        ).value;
-
-    const gradeClass =
-        document.getElementById(
-            "grade_class"
-        ).value;
-
-    const tutoring =
-        document.getElementById(
-            "tutoring"
-        ).value;
-
-    const minGPA =
-        document.getElementById(
-            "min_gpa"
-        ).value;
-
-    const maxGPA =
-        document.getElementById(
-            "max_gpa"
-        ).value;
-
-    const maxAbsences =
-        document.getElementById(
-            "max_absences"
-        ).value;
-
-
-    if (search) {
-        params.set(
-            "search",
-            search
-        );
-    }
-
-    if (gender) {
-        params.set(
-            "gender",
-            gender
-        );
-    }
-
-    if (gradeClass) {
-        params.set(
-            "grade_class",
-            gradeClass
-        );
-    }
-
-    if (tutoring) {
-        params.set(
-            "tutoring",
-            tutoring
-        );
-    }
-
-    if (minGPA) {
-        params.set(
-            "min_gpa",
-            minGPA
-        );
-    }
-
-    if (maxGPA) {
-        params.set(
-            "max_gpa",
-            maxGPA
-        );
-    }
-
-    if (maxAbsences) {
-        params.set(
-            "max_absences",
-            maxAbsences
-        );
-    }
-
-
-    return params;
-}
-
-
-function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-}
-
-
-function genderText(value) {
-
-    return Number(value) === 1
-        ? "Female"
-        : "Male";
-}
-
-
-function yesNo(value) {
-
-    return Number(value) === 1
-        ? "Yes"
-        : "No";
-}
-
-
-function gradeBadge(value) {
-
-    const grade =
-        Number(value);
-
-    return `
-        <span class="grade-badge grade-${grade}">
-            ${escapeHTML(value)}
-        </span>
-    `;
-}
-
-
-async function loadStudents() {
-
-    const loading =
-        document.getElementById(
-            "loading"
-        );
-
-    const tableContainer =
-        document.getElementById(
-            "tableContainer"
-        );
-
-    const empty =
-        document.getElementById(
-            "empty"
-        );
-
-    const errorBox =
-        document.getElementById(
-            "error"
-        );
-
-    const tbody =
-        document.getElementById(
-            "studentTableBody"
-        );
-
-    loading.style.display =
-        "block";
-
-    tableContainer.style.display =
-        "none";
-
-    empty.style.display =
-        "none";
-
-    errorBox.style.display =
-        "none";
-
-    tbody.innerHTML = "";
-
-
-    try {
-
-        const params =
-            getFilterParameters();
-
-
-        const response =
-            await fetch(
-                "/api/students?" +
-                params.toString()
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !response.ok ||
-            !data.success
-        ) {
-
-            throw new Error(
-                data.error ||
-                "Unable to load students."
-            );
-
-        }
-
-
-        loading.style.display =
-            "none";
-
-
-        document.getElementById(
-            "studentCount"
-        ).textContent =
-            `${data.count} student record(s) found`;
-
-
-        if (
-            !data.students ||
-            data.students.length === 0
-        ) {
-
-            empty.style.display =
-                "block";
-
-            return;
-
-        }
-
-
-        data.students.forEach(
-            student => {
-
-                const row =
-                    document.createElement(
-                        "tr"
-                    );
-
-
-                row.innerHTML = `
-
-                    <td>
-                        ${escapeHTML(
-                            student.StudentID
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            student.Age
-                        )}
-                    </td>
-
-                    <td>
-                        ${genderText(
-                            student.Gender
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            student.Ethnicity
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            student.ParentalEducation
-                        )}
-                    </td>
-
-                    <td>
-                        ${Number(
-                            student.StudyTimeWeekly
-                        ).toFixed(2)}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            student.Absences
-                        )}
-                    </td>
-
-                    <td>
-                        ${yesNo(
-                            student.Tutoring
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            student.ParentalSupport
-                        )}
-                    </td>
-
-                    <td>
-                        ${yesNo(
-                            student.Extracurricular
-                        )}
-                    </td>
-
-                    <td>
-                        ${yesNo(
-                            student.Sports
-                        )}
-                    </td>
-
-                    <td>
-                        ${yesNo(
-                            student.Music
-                        )}
-                    </td>
-
-                    <td>
-                        ${yesNo(
-                            student.Volunteering
-                        )}
-                    </td>
-
-                    <td>
-                        ${Number(
-                            student.GPA
-                        ).toFixed(2)}
-                    </td>
-
-                    <td>
-                        ${gradeBadge(
-                            student.GradeClass
-                        )}
-                    </td>
-
-                `;
-
-
-                tbody.appendChild(
-                    row
-                );
-
+    "use strict";
+
+    const elements = {
+        form: document.getElementById("filterForm"),
+        search: document.getElementById("search"),
+        gender: document.getElementById("gender"),
+        gradeClass: document.getElementById("grade_class"),
+        tutoring: document.getElementById("tutoring"),
+        minGpa: document.getElementById("min_gpa"),
+        maxGpa: document.getElementById("max_gpa"),
+        maxAbsences: document.getElementById("max_absences"),
+        loading: document.getElementById("loading"),
+        tableContainer: document.getElementById("tableContainer"),
+        tbody: document.getElementById("studentTableBody"),
+        empty: document.getElementById("empty"),
+        error: document.getElementById("error"),
+        summary: document.getElementById("resultSummary"),
+        applyButton: document.getElementById("applyButton"),
+        clearButton: document.getElementById("clearButton"),
+        downloadButton: document.getElementById("downloadButton")
+    };
+
+    const gradeNames = {
+        0: "Excellent",
+        1: "Very Good",
+        2: "Good",
+        3: "Needs Improvement",
+        4: "At Risk"
+    };
+
+    function getFilterParameters() {
+        const params = new URLSearchParams();
+
+        const filters = [
+            ["search", elements.search.value.trim()],
+            ["gender", elements.gender.value],
+            ["grade_class", elements.gradeClass.value],
+            ["tutoring", elements.tutoring.value],
+            ["min_gpa", elements.minGpa.value],
+            ["max_gpa", elements.maxGpa.value],
+            ["max_absences", elements.maxAbsences.value]
+        ];
+
+        for (const [key, value] of filters) {
+            if (value !== "") {
+                params.set(key, value);
             }
-        );
+        }
 
-
-        tableContainer.style.display =
-            "block";
-
+        return params;
     }
 
-    catch (error) {
+    function escapeHTML(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
 
-        loading.style.display =
-            "none";
-
-        errorBox.textContent =
-            "❌ " + error.message;
-
-        errorBox.style.display =
-            "block";
-
+        return String(value).replace(/[&<>"']/g, character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        })[character]);
     }
 
-}
+    function displayValue(value) {
+        return value === null || value === undefined || value === ""
+            ? "—"
+            : escapeHTML(value);
+    }
 
+    function numberValue(value, digits = 2) {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
 
-function clearFilters() {
+        const number = Number(value);
+        return Number.isFinite(number) ? number.toFixed(digits) : "—";
+    }
 
-    document.getElementById(
-        "search"
-    ).value = "";
+    function genderText(value) {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
 
-    document.getElementById(
-        "gender"
-    ).value = "";
+        return Number(value) === 1 ? "Female" : "Male";
+    }
 
-    document.getElementById(
-        "grade_class"
-    ).value = "";
+    function yesNo(value) {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
 
-    document.getElementById(
-        "tutoring"
-    ).value = "";
+        return Number(value) === 1 ? "Yes" : "No";
+    }
 
-    document.getElementById(
-        "min_gpa"
-    ).value = "";
+    function gradeBadge(value) {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
 
-    document.getElementById(
-        "max_gpa"
-    ).value = "";
+        const grade = Number(value);
 
-    document.getElementById(
-        "max_absences"
-    ).value = "";
+        if (!Number.isInteger(grade) || grade < 0 || grade > 4) {
+            return displayValue(value);
+        }
 
+        return `
+            <span class="grade-badge grade-${grade}"
+                  title="${escapeHTML(gradeNames[grade])}">
+                ${grade} - ${escapeHTML(gradeNames[grade])}
+            </span>
+        `;
+    }
 
+    function showError(message) {
+        elements.error.textContent = "❌ " + message;
+        elements.error.style.display = "block";
+    }
+
+    function hideError() {
+        elements.error.textContent = "";
+        elements.error.style.display = "none";
+    }
+
+    function validateFilters() {
+        const minGpa = elements.minGpa.value;
+        const maxGpa = elements.maxGpa.value;
+        const maxAbsences = elements.maxAbsences.value;
+
+        if (minGpa !== "" && (Number(minGpa) < 1 || Number(minGpa) > 10)) {
+            return "Minimum GPA must be between 1 and 10.";
+        }
+
+        if (maxGpa !== "" && (Number(maxGpa) < 1 || Number(maxGpa) > 10)) {
+            return "Maximum GPA must be between 1 and 10.";
+        }
+
+        if (
+            minGpa !== "" &&
+            maxGpa !== "" &&
+            Number(minGpa) > Number(maxGpa)
+        ) {
+            return "Minimum GPA cannot be greater than maximum GPA.";
+        }
+
+        if (maxAbsences !== "" && Number(maxAbsences) < 0) {
+            return "Maximum absences cannot be negative.";
+        }
+
+        return null;
+    }
+
+    function renderStudent(student) {
+        const row = document.createElement("tr");
+
+        const cells = [
+            displayValue(student.StudentID),
+            displayValue(student.Age),
+            genderText(student.Gender),
+            displayValue(student.Ethnicity),
+            displayValue(student.ParentalEducation),
+            numberValue(student.StudyTimeWeekly),
+            displayValue(student.Absences),
+            yesNo(student.Tutoring),
+            displayValue(student.ParentalSupport),
+            yesNo(student.Extracurricular),
+            yesNo(student.Sports),
+            yesNo(student.Music),
+            yesNo(student.Volunteering),
+            numberValue(student.GPA),
+            gradeBadge(student.GradeClass)
+        ];
+
+        row.innerHTML = cells.map((cell, index) => {
+            if (index === 14) {
+                return `<td>${cell}</td>`;
+            }
+
+            return `<td>${cell}</td>`;
+        }).join("");
+
+        elements.tbody.appendChild(row);
+    }
+
+    async function loadStudents() {
+        const validationError = validateFilters();
+
+        if (validationError) {
+            showError(validationError);
+            return;
+        }
+
+        hideError();
+        elements.loading.hidden = false;
+        elements.tableContainer.hidden = true;
+        elements.empty.hidden = true;
+        elements.tbody.replaceChildren();
+        elements.summary.textContent = "Loading records...";
+        elements.applyButton.disabled = true;
+
+        try {
+            const params = getFilterParameters();
+            const query = params.toString();
+            const url = "/api/students" + (query ? "?" + query : "");
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                }
+            });
+
+            const contentType = response.headers.get("content-type") || "";
+
+            if (!contentType.includes("application/json")) {
+                throw new Error(
+                    "The server did not return JSON. Check the Flask /api/students route."
+                );
+            }
+
+            const data = await response.json();
+
+            if (!response.ok || data.success === false) {
+                throw new Error(
+                    data.error || data.message || "Unable to load student records."
+                );
+            }
+
+            const students = Array.isArray(data.students)
+                ? data.students
+                : Array.isArray(data.data)
+                    ? data.data
+                    : [];
+
+            elements.loading.hidden = true;
+
+            const total = data.count ?? students.length;
+            elements.summary.textContent =
+                `${total} student record(s) found`;
+
+            if (students.length === 0) {
+                elements.empty.hidden = false;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            for (const student of students) {
+                renderStudent(student);
+            }
+
+            elements.tableContainer.hidden = false;
+
+        } catch (error) {
+            elements.loading.hidden = true;
+            elements.tableContainer.hidden = true;
+            elements.summary.textContent = "Unable to load records";
+            showError(error.message || "An unexpected error occurred.");
+        } finally {
+            elements.applyButton.disabled = false;
+        }
+    }
+
+    function clearFilters() {
+        elements.form.reset();
+        hideError();
+        loadStudents();
+    }
+
+    function downloadStudents() {
+        const validationError = validateFilters();
+
+        if (validationError) {
+            showError(validationError);
+            return;
+        }
+
+        const params = getFilterParameters();
+        const query = params.toString();
+        const url = "/api/students/download" + (query ? "?" + query : "");
+
+        // The Flask backend must implement this download route.
+        window.location.assign(url);
+    }
+
+    elements.form.addEventListener("submit", event => {
+        event.preventDefault();
+        loadStudents();
+    });
+
+    elements.clearButton.addEventListener("click", clearFilters);
+
+    elements.downloadButton.addEventListener("click", downloadStudents);
+
+    // Load records when the page opens.
     loadStudents();
-
-}
-
-
-function downloadStudents() {
-
-    const params =
-        getFilterParameters();
-
-
-    const url =
-        "/api/students/download?" +
-        params.toString();
-
-
-    window.location.href =
-        url;
-
-}
-
-
-loadStudents();
-
 </script>
-
 </body>
 </html>

@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Predict Student | Academic AI</title>
 
     <style>
-
         * {
             margin: 0;
             padding: 0;
@@ -38,18 +35,12 @@
             min-height: 100vh;
         }
 
-        /* =========================================
-           APP
-        ========================================= */
-
         .app {
             display: flex;
             min-height: 100vh;
         }
 
-        /* =========================================
-           SIDEBAR
-        ========================================= */
+        /* SIDEBAR */
 
         .sidebar {
             width: 250px;
@@ -61,6 +52,7 @@
             left: 0;
             bottom: 0;
             z-index: 100;
+            overflow-y: auto;
         }
 
         .brand {
@@ -73,16 +65,13 @@
         .brand-icon {
             width: 42px;
             height: 42px;
-            background: linear-gradient(
-                135deg,
-                #6366f1,
-                #8b5cf6
-            );
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 21px;
+            flex-shrink: 0;
         }
 
         .brand-text h2 {
@@ -135,6 +124,7 @@
         .nav-icon {
             width: 22px;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .sidebar-bottom {
@@ -173,9 +163,7 @@
             box-shadow: 0 0 8px #22c55e;
         }
 
-        /* =========================================
-           MAIN
-        ========================================= */
+        /* MAIN */
 
         .main {
             margin-left: 250px;
@@ -196,15 +184,12 @@
             margin-top: 6px;
             color: var(--muted);
             font-size: 13px;
+            line-height: 1.6;
         }
-
-        /* =========================================
-           GRID
-        ========================================= */
 
         .content-grid {
             display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
             gap: 20px;
             align-items: start;
         }
@@ -214,6 +199,7 @@
             border: 1px solid var(--border);
             border-radius: 15px;
             padding: 22px;
+            min-width: 0;
         }
 
         .card-title {
@@ -225,22 +211,22 @@
         .card-description {
             color: var(--muted);
             font-size: 11px;
+            line-height: 1.6;
             margin-bottom: 20px;
         }
 
-        /* =========================================
-           FORM
-        ========================================= */
+        /* FORM */
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 15px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
         .form-group.full {
@@ -271,34 +257,36 @@
         input:focus,
         select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(
-                99,
-                102,
-                241,
-                0.10
-            );
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
         }
 
         .hint {
             font-size: 9px;
             color: #9ca3af;
             margin-top: 5px;
+            line-height: 1.5;
         }
 
         .button-row {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
             margin-top: 20px;
         }
 
         .btn {
             border: none;
             border-radius: 9px;
-            padding: 11px 18px;
+            padding: 12px 18px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 700;
             transition: 0.2s;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
         .btn-primary {
@@ -306,7 +294,7 @@
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background: var(--primary-dark);
             transform: translateY(-1px);
         }
@@ -320,10 +308,6 @@
             background: #e5e7eb;
         }
 
-        /* =========================================
-           NO LEAKAGE
-        ========================================= */
-
         .info-box {
             background: #eef2ff;
             border: 1px solid #c7d2fe;
@@ -331,13 +315,11 @@
             border-radius: 10px;
             padding: 13px;
             font-size: 10px;
-            line-height: 1.6;
+            line-height: 1.7;
             margin-top: 18px;
         }
 
-        /* =========================================
-           RESULT
-        ========================================= */
+        /* RESULTS */
 
         .result-panel {
             display: none;
@@ -347,6 +329,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             margin-bottom: 18px;
         }
 
@@ -357,14 +340,11 @@
             padding: 6px 10px;
             font-size: 9px;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .prediction-main {
-            background: linear-gradient(
-                135deg,
-                #eef2ff,
-                #f5f3ff
-            );
+            background: linear-gradient(135deg, #eef2ff, #f5f3ff);
             border: 1px solid #ddd6fe;
             border-radius: 14px;
             padding: 20px;
@@ -383,16 +363,18 @@
             font-weight: 800;
             color: #4f46e5;
             margin-top: 4px;
+            overflow-wrap: anywhere;
         }
 
         .prediction-class {
             color: #4b5563;
             font-size: 12px;
+            line-height: 1.6;
         }
 
         .result-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 18px;
         }
@@ -401,6 +383,7 @@
             border: 1px solid var(--border);
             border-radius: 11px;
             padding: 14px;
+            min-width: 0;
         }
 
         .result-box-label {
@@ -414,11 +397,10 @@
             font-size: 17px;
             font-weight: 750;
             margin-top: 6px;
+            overflow-wrap: anywhere;
         }
 
-        /* =========================================
-           AI ADVISOR
-        ========================================= */
+        /* ADVISOR */
 
         .advisor {
             margin-top: 18px;
@@ -428,11 +410,7 @@
         }
 
         .advisor-header {
-            background: linear-gradient(
-                135deg,
-                #4f46e5,
-                #7c3aed
-            );
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             padding: 16px;
         }
@@ -478,6 +456,10 @@
             font-size: 15px;
         }
 
+        .recommendation-content {
+            min-width: 0;
+        }
+
         .recommendation-content h4 {
             font-size: 11px;
             margin-bottom: 4px;
@@ -486,7 +468,7 @@
         .recommendation-content p {
             color: #6b7280;
             font-size: 10px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .priority-high {
@@ -519,12 +501,10 @@
 
         .overall-text {
             font-size: 11px;
-            line-height: 1.5;
+            line-height: 1.7;
         }
 
-        /* =========================================
-           PROBABILITIES
-        ========================================= */
+        /* PROBABILITIES */
 
         .probabilities {
             margin-top: 17px;
@@ -537,6 +517,7 @@
         .probability-top {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             font-size: 10px;
             margin-bottom: 5px;
         }
@@ -551,17 +532,9 @@
         .progress-bar {
             height: 100%;
             border-radius: 20px;
-            background: linear-gradient(
-                90deg,
-                #6366f1,
-                #8b5cf6
-            );
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
             transition: width 0.6s ease;
         }
-
-        /* =========================================
-           DISCLAIMER
-        ========================================= */
 
         .disclaimer {
             margin-top: 15px;
@@ -570,12 +543,8 @@
             background: #f9fafb;
             color: #6b7280;
             font-size: 9px;
-            line-height: 1.5;
+            line-height: 1.7;
         }
-
-        /* =========================================
-           ERROR
-        ========================================= */
 
         .error {
             display: none;
@@ -586,22 +555,17 @@
             border-radius: 9px;
             margin-bottom: 15px;
             font-size: 11px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
         }
 
-        /* =========================================
-           LOADING
-        ========================================= */
+        /* LOADING */
 
         .loading {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(
-                255,
-                255,
-                255,
-                0.75
-            );
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(4px);
             z-index: 999;
             align-items: center;
@@ -612,10 +576,9 @@
             background: white;
             border-radius: 14px;
             padding: 25px 30px;
-            box-shadow:
-                0 15px 40px
-                rgba(0,0,0,0.12);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
             text-align: center;
+            margin: 20px;
         }
 
         .spinner {
@@ -629,25 +592,16 @@
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
-        /* =========================================
-           RESPONSIVE
-        ========================================= */
-
         @media (max-width: 1100px) {
-
             .content-grid {
                 grid-template-columns: 1fr;
             }
-
         }
 
         @media (max-width: 900px) {
-
             .sidebar {
                 width: 70px;
                 padding: 15px 8px;
@@ -667,6 +621,7 @@
 
             .nav-item {
                 justify-content: center;
+                padding: 12px 5px;
             }
 
             .main {
@@ -674,16 +629,15 @@
                 width: calc(100% - 70px);
                 padding: 22px;
             }
-
         }
 
         @media (max-width: 600px) {
-
             .main {
-                padding: 17px;
+                padding: 14px;
             }
 
-            .form-grid {
+            .form-grid,
+            .result-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -691,302 +645,137 @@
                 grid-column: span 1;
             }
 
-            .result-grid {
-                grid-template-columns: 1fr;
-            }
-
             .page-header h1 {
                 font-size: 22px;
             }
 
+            .card {
+                padding: 16px;
+            }
+
+            .button-row .btn {
+                flex: 1 1 100%;
+            }
+
+            .prediction-gpa {
+                font-size: 38px;
+            }
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-
-<!-- ============================================
-     LOADING
-============================================= -->
-
-<div
-    class="loading"
-    id="loading"
->
-
+<div class="loading" id="loading" aria-live="polite">
     <div class="loading-box">
-
         <div class="spinner"></div>
-
-        <div
-            style="
-                font-size:13px;
-                font-weight:700;
-            "
-        >
+        <div style="font-size:13px;font-weight:700;">
             AI is analyzing the student...
         </div>
-
-        <div
-            style="
-                color:#6b7280;
-                font-size:10px;
-                margin-top:5px;
-            "
-        >
+        <div style="color:#6b7280;font-size:10px;margin-top:5px;">
             Generating academic prediction
         </div>
-
     </div>
-
 </div>
-
 
 <div class="app">
 
-
-    <!-- =========================================
-         SIDEBAR
-    ========================================== -->
-
     <aside class="sidebar">
-
-
         <div class="brand">
-
-            <div class="brand-icon">
-                🎓
-            </div>
-
+            <div class="brand-icon">🎓</div>
             <div class="brand-text">
-
-                <h2>
-                    Academic AI
-                </h2>
-
-                <span>
-                    Performance Analytics
-                </span>
-
+                <h2>Academic AI</h2>
+                <span>Performance Analytics</span>
             </div>
-
         </div>
 
+        <div class="menu-title">Analytics</div>
 
-        <div class="menu-title">
-            Analytics
-        </div>
-
-
-        <a
-            href="/"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                📊
-            </span>
-
-            <span class="nav-text">
-                Dashboard
-            </span>
-
+        <a href="/" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Dashboard</span>
         </a>
 
-
-        <a
-            href="/students"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                👨‍🎓
-            </span>
-
-            <span class="nav-text">
-                Student Records
-            </span>
-
+        <a href="/students" class="nav-item">
+            <span class="nav-icon">👨‍🎓</span>
+            <span class="nav-text">Student Records</span>
         </a>
 
+        <div class="menu-title">Machine Learning</div>
 
-        <div class="menu-title">
-            Machine Learning
-        </div>
-
-
-        <a
-            href="/predict"
-            class="nav-item active"
-        >
-
-            <span class="nav-icon">
-                🔮
-            </span>
-
-            <span class="nav-text">
-                Predict Student
-            </span>
-
+        <a href="/predict" class="nav-item active">
+            <span class="nav-icon">🔮</span>
+            <span class="nav-text">Predict Student</span>
         </a>
 
-
-        <a
-            href="/what-if"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                🎯
-            </span>
-
-            <span class="nav-text">
-                What-If Analysis
-            </span>
-
+        <a href="/what-if" class="nav-item">
+            <span class="nav-icon">🎯</span>
+            <span class="nav-text">What-If Analysis</span>
         </a>
 
-
-        <a
-            href="/model-lab"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                🧪
-            </span>
-
-            <span class="nav-text">
-                Model Lab
-            </span>
-
+        <a href="/model-lab" class="nav-item">
+            <span class="nav-icon">🧪</span>
+            <span class="nav-text">Model Lab</span>
         </a>
 
+        <div class="menu-title">Management</div>
 
-        <div class="menu-title">
-            Management
-        </div>
-
-
-        <a
-            href="/add-student"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                ➕
-            </span>
-
-            <span class="nav-text">
-                Add Student
-            </span>
-
+        <a href="/add-student" class="nav-item">
+            <span class="nav-icon">➕</span>
+            <span class="nav-text">Add Student</span>
         </a>
 
-
-        <a
-            href="/retrain"
-            class="nav-item"
-        >
-
-            <span class="nav-icon">
-                🔄
-            </span>
-
-            <span class="nav-text">
-                Retrain Models
-            </span>
-
+        <a href="/retrain" class="nav-item">
+            <span class="nav-icon">🔄</span>
+            <span class="nav-text">Retrain Models</span>
         </a>
 
+        <a href="/at-risk" class="nav-item">
+            <span class="nav-icon">⚠️</span>
+            <span class="nav-text">At-Risk Students</span>
+        </a>
 
         <div class="sidebar-bottom">
-
             <div class="model-status">
-
-                <div class="model-status-title">
-                    ML SYSTEM
-                </div>
-
+                <div class="model-status-title">ML SYSTEM</div>
                 <div class="online">
-
                     <span class="online-dot"></span>
-
                     Models Online
-
                 </div>
-
             </div>
-
         </div>
-
-
     </aside>
-
-
-    <!-- =========================================
-         MAIN
-    ========================================== -->
 
     <main class="main">
 
-
         <div class="page-header">
-
-            <h1>
-                🔮 Predict Student Performance
-            </h1>
-
+            <h1>🔮 Predict Student Performance</h1>
             <p>
-                Enter student information to generate an AI-powered academic prediction and personalized guidance.
+                Enter student information to generate an AI-powered academic
+                prediction and personalized guidance.
             </p>
-
         </div>
 
-
-        <div
-            class="error"
-            id="error"
-        ></div>
-
+        <div class="error" id="error" role="alert"></div>
 
         <div class="content-grid">
 
+            <!-- INPUT FORM -->
 
-            <!-- =====================================
-                 INPUT FORM
-            ====================================== -->
-
-            <div class="card">
-
-                <div class="card-title">
-                    Student Information
-                </div>
-
+            <section class="card">
+                <div class="card-title">Student Information</div>
                 <div class="card-description">
-                    Provide the student's behavioral and demographic information.
+                    Provide the student's demographic, study, and behavioral
+                    information. All 12 model input features are required.
                 </div>
-
 
                 <form id="predictionForm">
-
-
                     <div class="form-grid">
 
-
-                        <!-- AGE -->
-
                         <div class="form-group">
-
-                            <label>
-                                Age
-                            </label>
-
+                            <label for="age">Age</label>
                             <input
+                                id="age"
                                 type="number"
                                 name="Age"
                                 min="10"
@@ -994,302 +783,148 @@
                                 value="18"
                                 required
                             >
-
                         </div>
 
-
-                        <!-- GENDER -->
-
                         <div class="form-group">
-
-                            <label>
-                                Gender
-                            </label>
-
-                            <select
-                                name="Gender"
-                                required
-                            >
-
-                                <option value="0">
-                                    Female
-                                </option>
-
-                                <option value="1">
-                                    Male
-                                </option>
-
+                            <label for="gender">Gender</label>
+                            <select id="gender" name="Gender" required>
+                                <option value="0">Female</option>
+                                <option value="1">Male</option>
                             </select>
-
+                            <span class="hint">
+                                Uses the dataset's numeric encoding.
+                            </span>
                         </div>
 
-
-                        <!-- ETHNICITY -->
-
                         <div class="form-group">
-
-                            <label>
-                                Ethnicity
-                            </label>
-
+                            <label for="ethnicity">Ethnicity</label>
                             <input
+                                id="ethnicity"
                                 type="number"
                                 name="Ethnicity"
                                 min="0"
                                 max="10"
+                                step="1"
                                 value="0"
                                 required
                             >
-
-                            <span class="hint">
-                                Dataset encoded value
-                            </span>
-
+                            <span class="hint">Dataset-encoded value.</span>
                         </div>
 
-
-                        <!-- PARENT EDUCATION -->
-
                         <div class="form-group">
-
-                            <label>
-                                Parental Education
-                            </label>
-
+                            <label for="parentalEducation">Parental Education</label>
                             <input
+                                id="parentalEducation"
                                 type="number"
                                 name="ParentalEducation"
                                 min="0"
                                 max="10"
+                                step="1"
                                 value="2"
                                 required
                             >
-
+                            <span class="hint">Use the dataset encoding.</span>
                         </div>
 
-
-                        <!-- STUDY TIME -->
-
                         <div class="form-group">
-
-                            <label>
-                                Weekly Study Time
-                            </label>
-
+                            <label for="studyTime">Weekly Study Time</label>
                             <input
+                                id="studyTime"
                                 type="number"
                                 name="StudyTimeWeekly"
                                 min="0"
-                                max="60"
+                                max="168"
                                 step="0.1"
                                 value="10"
                                 required
                             >
-
-                            <span class="hint">
-                                Hours per week
-                            </span>
-
+                            <span class="hint">Hours per week.</span>
                         </div>
 
-
-                        <!-- ABSENCES -->
-
                         <div class="form-group">
-
-                            <label>
-                                Absences
-                            </label>
-
+                            <label for="absences">Absences</label>
                             <input
+                                id="absences"
                                 type="number"
                                 name="Absences"
                                 min="0"
-                                max="100"
-                                value="10"
+                                max="365"
+                                step="1"
+                                value="5"
                                 required
                             >
-
                         </div>
 
-
-                        <!-- TUTORING -->
-
                         <div class="form-group">
-
-                            <label>
-                                Tutoring
-                            </label>
-
-                            <select
-                                name="Tutoring"
-                                required
-                            >
-
-                                <option value="0">
-                                    No
-                                </option>
-
-                                <option value="1">
-                                    Yes
-                                </option>
-
+                            <label for="tutoring">Tutoring</label>
+                            <select id="tutoring" name="Tutoring" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
                             </select>
-
                         </div>
 
-
-                        <!-- PARENTAL SUPPORT -->
-
                         <div class="form-group">
-
-                            <label>
-                                Parental Support
-                            </label>
-
+                            <label for="parentalSupport">Parental Support</label>
                             <select
+                                id="parentalSupport"
                                 name="ParentalSupport"
                                 required
                             >
-
-                                <option value="0">
-                                    None
-                                </option>
-
-                                <option value="1">
-                                    Low
-                                </option>
-
-                                <option value="2"
-                                    selected>
-                                    Moderate
-                                </option>
-
-                                <option value="3">
-                                    High
-                                </option>
-
-                                <option value="4">
-                                    Very High
-                                </option>
-
+                                <option value="0">None</option>
+                                <option value="1">Low</option>
+                                <option value="2" selected>Moderate</option>
+                                <option value="3">High</option>
+                                <option value="4">Very High</option>
                             </select>
-
                         </div>
 
-
-                        <!-- EXTRACURRICULAR -->
-
                         <div class="form-group">
-
-                            <label>
-                                Extracurricular
-                            </label>
-
+                            <label for="extracurricular">Extracurricular</label>
                             <select
+                                id="extracurricular"
                                 name="Extracurricular"
                                 required
                             >
-
-                                <option value="0">
-                                    No
-                                </option>
-
-                                <option value="1">
-                                    Yes
-                                </option>
-
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
                             </select>
-
                         </div>
 
-
-                        <!-- SPORTS -->
-
                         <div class="form-group">
-
-                            <label>
-                                Sports
-                            </label>
-
-                            <select
-                                name="Sports"
-                                required
-                            >
-
-                                <option value="0">
-                                    No
-                                </option>
-
-                                <option value="1">
-                                    Yes
-                                </option>
-
+                            <label for="sports">Sports</label>
+                            <select id="sports" name="Sports" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
                             </select>
-
                         </div>
 
-
-                        <!-- MUSIC -->
-
                         <div class="form-group">
-
-                            <label>
-                                Music
-                            </label>
-
-                            <select
-                                name="Music"
-                                required
-                            >
-
-                                <option value="0">
-                                    No
-                                </option>
-
-                                <option value="1">
-                                    Yes
-                                </option>
-
+                            <label for="music">Music</label>
+                            <select id="music" name="Music" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
                             </select>
-
                         </div>
 
-
-                        <!-- VOLUNTEERING -->
-
                         <div class="form-group">
-
-                            <label>
-                                Volunteering
-                            </label>
-
+                            <label for="volunteering">Volunteering</label>
                             <select
+                                id="volunteering"
                                 name="Volunteering"
                                 required
                             >
-
-                                <option value="0">
-                                    No
-                                </option>
-
-                                <option value="1">
-                                    Yes
-                                </option>
-
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
                             </select>
-
                         </div>
-
 
                     </div>
 
-
                     <div class="button-row">
-
                         <button
                             type="submit"
                             class="btn btn-primary"
+                            id="predictButton"
                         >
                             🤖 Generate Prediction
                         </button>
@@ -1301,1031 +936,552 @@
                         >
                             Reset
                         </button>
-
                     </div>
-
-
                 </form>
 
-
                 <div class="info-box">
-
-                    🔒 <strong>No Data Leakage:</strong>
-
-                    Actual GPA is intentionally not requested.
-                    The model predicts GPA using only the 12 approved behavioral and demographic features.
-
+                    🔒 <strong>Data Leakage Protection</strong><br>
+                    Actual GPA and StudentID are not requested as input
+                    features. The model predicts GPA and GradeClass using
+                    the 12 approved demographic and behavioral features.
+                    Use numeric category values consistent with your dataset.
                 </div>
+            </section>
 
-            </div>
+            <!-- PREDICTION RESULT -->
 
-
-            <!-- =====================================
-                 RESULT
-            ====================================== -->
-
-            <div
-                class="card result-panel"
-                id="resultPanel"
-            >
-
+            <section class="card result-panel" id="resultPanel" aria-live="polite">
 
                 <div class="result-header">
-
                     <div>
-
-                        <div class="card-title">
-                            Prediction Result
-                        </div>
-
-                        <div class="card-description">
+                        <div class="card-title">Prediction Result</div>
+                        <div class="card-description" style="margin-bottom:0;">
                             Machine-learning generated academic assessment
                         </div>
-
                     </div>
 
-                    <span class="prediction-badge">
-                        AI PREDICTION
-                    </span>
-
+                    <span class="prediction-badge">AI PREDICTION</span>
                 </div>
-
-
-                <!-- MAIN PREDICTION -->
 
                 <div class="prediction-main">
-
-                    <div class="prediction-label">
-                        Predicted GPA
-                    </div>
-
-                    <div
-                        class="prediction-gpa"
-                        id="predictedGPA"
-                    >
-                        --
-                    </div>
-
-                    <div
-                        class="prediction-class"
-                        id="predictedClass"
-                    >
+                    <div class="prediction-label">Predicted GPA / 10</div>
+                    <div class="prediction-gpa" id="predictedGPA">--</div>
+                    <div class="prediction-class" id="predictedClass">
                         Grade Class --
                     </div>
-
                 </div>
-
-
-                <!-- RESULT BOXES -->
 
                 <div class="result-grid">
-
-
                     <div class="result-box">
-
-                        <div class="result-box-label">
-                            Performance
-                        </div>
-
-                        <div
-                            class="result-box-value"
-                            id="performanceCategory"
-                        >
+                        <div class="result-box-label">Performance</div>
+                        <div class="result-box-value" id="performanceCategory">
                             --
                         </div>
-
                     </div>
-
 
                     <div class="result-box">
-
-                        <div class="result-box-label">
-                            Model Status
-                        </div>
-
-                        <div
-                            class="result-box-value"
-                            id="modelStatus"
-                        >
+                        <div class="result-box-label">Model Status</div>
+                        <div class="result-box-value" id="modelStatus">
                             --
                         </div>
-
                     </div>
-
-
                 </div>
 
-
-                <!-- =================================
-                     AI ADVISOR
-                ================================== -->
-
                 <div class="advisor">
-
-
                     <div class="advisor-header">
-
-                        <div class="advisor-title">
-                            🤖 AI Academic Advisor
-                        </div>
-
+                        <div class="advisor-title">🤖 AI Academic Advisor</div>
                         <div class="advisor-subtitle">
                             Personalized model-informed guidance
                         </div>
-
                     </div>
 
-
                     <div class="advisor-body">
-
                         <div id="recommendations"></div>
 
-
                         <div class="overall">
-
                             <div class="overall-title">
                                 🎯 Overall Recommendation
                             </div>
-
-                            <div
-                                class="overall-text"
-                                id="overallRecommendation"
-                            >
+                            <div class="overall-text" id="overallRecommendation">
                                 --
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
 
-
-                <!-- =================================
-                     CLASS PROBABILITIES
-                ================================== -->
-
-                <div
-                    class="probabilities"
-                    id="probabilities"
-                >
-
-                    <div
-                        style="
-                            font-size:11px;
-                            font-weight:750;
-                            margin-bottom:12px;
-                        "
-                    >
+                <div class="probabilities" id="probabilities">
+                    <div style="font-size:11px;font-weight:750;margin-bottom:12px;">
                         Grade Class Probabilities
                     </div>
-
                     <div id="probabilityList"></div>
-
                 </div>
-
 
                 <div class="disclaimer">
-
                     ⚠️ <strong>Important:</strong>
-                    Predictions and recommendations are generated from the trained machine-learning model.
-                    They are model-based guidance and should not be interpreted as guaranteed causal outcomes.
-
+                    Predictions and recommendations are based on a trained
+                    machine-learning model. They are estimates, not guaranteed
+                    outcomes or proof of cause and effect. GradeClass labels
+                    follow the project's configured target mapping.
                 </div>
-
-
-            </div>
-
+            </section>
 
         </div>
-
-
     </main>
-
 </div>
 
-
 <script>
+"use strict";
 
-    /* =========================================================
-       ELEMENTS
-    ========================================================= */
+const form = document.getElementById("predictionForm");
+const resultPanel = document.getElementById("resultPanel");
+const loading = document.getElementById("loading");
+const errorBox = document.getElementById("error");
+const resetButton = document.getElementById("resetBtn");
+const predictButton = document.getElementById("predictButton");
 
-    const form =
-        document.getElementById(
-            "predictionForm"
-        );
+/*
+ * Read the 12 approved input features from the form.
+ * StudentID and actual GPA are deliberately excluded.
+ */
+function getFormData() {
+    const formData = new FormData(form);
+    const data = {};
 
-    const resultPanel =
-        document.getElementById(
-            "resultPanel"
-        );
+    formData.forEach((value, key) => {
+        const numberValue = Number(value);
 
-    const loading =
-        document.getElementById(
-            "loading"
-        );
+        if (value.trim() === "" || !Number.isFinite(numberValue)) {
+            throw new Error("Please enter a valid value for " + key + ".");
+        }
 
-    const errorBox =
-        document.getElementById(
-            "error"
-        );
+        data[key] = numberValue;
+    });
 
-    const resetButton =
-        document.getElementById(
-            "resetBtn"
-        );
+    return data;
+}
 
+function getGradeLabel(gradeClass) {
+    const labels = {
+        0: "Excellent",
+        1: "Very Good",
+        2: "Good",
+        3: "Needs Improvement",
+        4: "At Risk"
+    };
 
-    /* =========================================================
-       FORM DATA
-    ========================================================= */
+    return labels[gradeClass] || "Unknown Grade Class";
+}
 
-    function getFormData() {
-
-        const formData =
-            new FormData(form);
-
-        const data = {};
-
-        formData.forEach(
-            (value, key) => {
-
-                const numberValue =
-                    Number(value);
-
-                if (
-                    value !== "" &&
-                    !Number.isNaN(
-                        numberValue
-                    )
-                ) {
-
-                    data[key] =
-                        numberValue;
-
-                } else {
-
-                    data[key] =
-                        value;
-
-                }
-
-            }
-        );
-
-        return data;
-
-    }
-
-
-    /* =========================================================
-       ADVISOR
-    ========================================================= */
-
-    function generateRecommendations(
-        student,
-        prediction
+function getPerformanceCategory(gpa, prediction) {
+    if (
+        prediction.performance_category ||
+        prediction.performance
     ) {
-
-        const recommendations = [];
-
-
-        const studyTime =
-            Number(
-                student.StudyTimeWeekly
-            );
-
-
-        const absences =
-            Number(
-                student.Absences
-            );
-
-
-        const tutoring =
-            Number(
-                student.Tutoring
-            );
-
-
-        const parentalSupport =
-            Number(
-                student.ParentalSupport
-            );
-
-
-        const extracurricular =
-            Number(
-                student.Extracurricular
-            );
-
-
-        const sports =
-            Number(
-                student.Sports
-            );
-
-
-        const music =
-            Number(
-                student.Music
-            );
-
-
-        const volunteering =
-            Number(
-                student.Volunteering
-            );
-
-
-        /* =====================================
-           STUDY TIME
-        ====================================== */
-
-        if (studyTime < 8) {
-
-            recommendations.push({
-
-                icon: "📚",
-
-                className:
-                    "priority-high",
-
-                title:
-                    "Study Time Needs Attention",
-
-                text:
-                    `Current study time is ${studyTime} hours/week. Consider building a more consistent study routine.`
-
-            });
-
-        } else if (studyTime < 15) {
-
-            recommendations.push({
-
-                icon: "📖",
-
-                className:
-                    "priority-medium",
-
-                title:
-                    "Increase Study Consistency",
-
-                text:
-                    `Current study time is ${studyTime} hours/week. A consistent increase may support stronger academic preparation.`
-
-            });
-
-        } else {
-
-            recommendations.push({
-
-                icon: "✅",
-
-                className:
-                    "priority-good",
-
-                title:
-                    "Strong Study Pattern",
-
-                text:
-                    `The student reports ${studyTime} hours/week of study time, indicating a strong study commitment.`
-
-            });
-
-        }
-
-
-        /* =====================================
-           ABSENCES
-        ====================================== */
-
-        if (absences >= 20) {
-
-            recommendations.push({
-
-                icon: "🚨",
-
-                className:
-                    "priority-high",
-
-                title:
-                    "Attendance Requires Attention",
-
-                text:
-                    `There are ${absences} absences. Improving attendance may help maintain consistent learning.`
-
-            });
-
-        } else if (absences >= 10) {
-
-            recommendations.push({
-
-                icon: "🏫",
-
-                className:
-                    "priority-medium",
-
-                title:
-                    "Monitor Attendance",
-
-                text:
-                    `There are ${absences} absences. Maintaining regular attendance should remain a priority.`
-
-            });
-
-        } else {
-
-            recommendations.push({
-
-                icon: "✅",
-
-                className:
-                    "priority-good",
-
-                title:
-                    "Good Attendance Pattern",
-
-                text:
-                    `The student has ${absences} absences, indicating relatively good attendance in the provided data.`
-
-            });
-
-        }
-
-
-        /* =====================================
-           TUTORING
-        ====================================== */
-
-        if (
-            tutoring === 0 &&
-            Number(
-                prediction.predicted_gpa
-            ) < 2.5
-        ) {
-
-            recommendations.push({
-
-                icon: "👨‍🏫",
-
-                className:
-                    "priority-medium",
-
-                title:
-                    "Consider Academic Support",
-
-                text:
-                    "Tutoring is currently not reported. Additional academic support may be worth considering if the student is struggling."
-
-            });
-
-        }
-
-
-        /* =====================================
-           PARENTAL SUPPORT
-        ====================================== */
-
-        if (
-            parentalSupport <= 1
-        ) {
-
-            recommendations.push({
-
-                icon: "👨‍👩‍👦",
-
-                className:
-                    "priority-medium",
-
-                title:
-                    "Increase Academic Support",
-
-                text:
-                    "The reported parental support level is relatively low. Regular academic communication may be helpful."
-
-            });
-
-        }
-
-
-        /* =====================================
-           ACTIVITIES
-        ====================================== */
-
-        if (
-            extracurricular === 0 &&
-            sports === 0 &&
-            music === 0 &&
-            volunteering === 0
-        ) {
-
-            recommendations.push({
-
-                icon: "🌱",
-
-                className:
-                    "priority-medium",
-
-                title:
-                    "Consider Balanced Activities",
-
-                text:
-                    "No extracurricular activities are reported. A balanced academic and activity routine may support broader student development."
-
-            });
-
-        }
-
-
-        /* =====================================
-           HIGH PERFORMANCE
-        ====================================== */
-
-        if (
-            Number(
-                prediction.predicted_gpa
-            ) >= 3.5
-        ) {
-
-            recommendations.push({
-
-                icon: "🏆",
-
-                className:
-                    "priority-good",
-
-                title:
-                    "Maintain Strong Performance",
-
-                text:
-                    "The predicted GPA is strong. Focus on maintaining consistency rather than making major changes."
-
-            });
-
-        }
-
-
-        return recommendations;
-
+        return prediction.performance_category ||
+            prediction.performance;
     }
 
-
-    /* =========================================================
-       RENDER ADVISOR
-    ========================================================= */
-
-    function renderAdvisor(
-        student,
-        prediction
-    ) {
-
-        const container =
-            document.getElementById(
-                "recommendations"
-            );
-
-
-        container.innerHTML = "";
-
-
-        const recommendations =
-            generateRecommendations(
-                student,
-                prediction
-            );
-
-
-        recommendations
-            .slice(0, 5)
-            .forEach(
-                recommendation => {
-
-                    const div =
-                        document.createElement(
-                            "div"
-                        );
-
-                    div.className =
-                        "recommendation";
-
-
-                    div.innerHTML = `
-
-                        <div
-                            class="
-                                recommendation-icon
-                                ${recommendation.className}
-                            "
-                        >
-                            ${recommendation.icon}
-                        </div>
-
-                        <div
-                            class="
-                                recommendation-content
-                            "
-                        >
-
-                            <h4>
-                                ${recommendation.title}
-                            </h4>
-
-                            <p>
-                                ${recommendation.text}
-                            </p>
-
-                        </div>
-
-                    `;
-
-
-                    container.appendChild(
-                        div
-                    );
-
-                }
-            );
-
-
-        /* =====================================
-           OVERALL RECOMMENDATION
-        ====================================== */
-
-        const gpa =
-            Number(
-                prediction.predicted_gpa
-            );
-
-
-        const overall =
-            document.getElementById(
-                "overallRecommendation"
-            );
-
-
-        if (gpa >= 3.5) {
-
-            overall.textContent =
-                "The model predicts strong academic performance. The main priority should be maintaining the current study and attendance pattern.";
-
-        } else if (gpa >= 3.0) {
-
-            overall.textContent =
-                "The student shows a positive predicted performance. Focus on consistency in study habits and attendance to maintain or improve the predicted outcome.";
-
-        } else if (gpa >= 2.0) {
-
-            overall.textContent =
-                "The prediction suggests room for improvement. Prioritize consistent study time, attendance, and appropriate academic support.";
-
-        } else {
-
-            overall.textContent =
-                "The prediction indicates a higher level of academic concern. Strong attention to study consistency, attendance, and academic support is recommended.";
-
-        }
-
+    if (!Number.isFinite(gpa)) {
+        return "Unavailable";
     }
 
+    if (gpa >= 8.875) return "Excellent";
+    if (gpa >= 7.75) return "Very Good";
+    if (gpa >= 6.625) return "Good";
+    if (gpa >= 5.5) return "Needs Improvement";
 
-    /* =========================================================
-       RENDER PROBABILITIES
-    ========================================================= */
+    return "At Risk";
+}
 
-    function renderProbabilities(
-        probabilities
+/* -------------------------------------------------------
+   ACADEMIC ADVISOR
+   GPA thresholds use the project's 1–10 scale.
+------------------------------------------------------- */
+
+function generateRecommendations(student, prediction) {
+    const recommendations = [];
+
+    const studyTime = Number(student.StudyTimeWeekly);
+    const absences = Number(student.Absences);
+    const tutoring = Number(student.Tutoring);
+    const parentalSupport = Number(student.ParentalSupport);
+
+    const extracurricular = Number(student.Extracurricular);
+    const sports = Number(student.Sports);
+    const music = Number(student.Music);
+    const volunteering = Number(student.Volunteering);
+
+    const gpa = Number(prediction.predicted_gpa);
+
+    if (studyTime < 8) {
+        recommendations.push({
+            icon: "📚",
+            className: "priority-high",
+            title: "Study Time Needs Attention",
+            text: `The student reports ${studyTime} study hours per week. Consider setting a realistic, consistent study timetable.`
+        });
+    } else if (studyTime < 15) {
+        recommendations.push({
+            icon: "📖",
+            className: "priority-medium",
+            title: "Build Study Consistency",
+            text: `The student reports ${studyTime} study hours per week. Review subject-wise progress and maintain a regular study routine.`
+        });
+    } else {
+        recommendations.push({
+            icon: "✅",
+            className: "priority-good",
+            title: "Strong Study Commitment",
+            text: `The student reports ${studyTime} study hours per week. Focus on effective study methods and adequate rest.`
+        });
+    }
+
+    if (absences >= 20) {
+        recommendations.push({
+            icon: "🚨",
+            className: "priority-high",
+            title: "Attendance Requires Attention",
+            text: `There are ${absences} reported absences. Identify attendance barriers and work toward regular participation.`
+        });
+    } else if (absences >= 10) {
+        recommendations.push({
+            icon: "🏫",
+            className: "priority-medium",
+            title: "Monitor Attendance",
+            text: `There are ${absences} reported absences. Monitor attendance and catch up on missed lessons.`
+        });
+    } else {
+        recommendations.push({
+            icon: "✅",
+            className: "priority-good",
+            title: "Attendance Pattern",
+            text: `There are ${absences} reported absences. Continue maintaining regular attendance.`
+        });
+    }
+
+    if (tutoring === 0 && Number.isFinite(gpa) && gpa < 6.625) {
+        recommendations.push({
+            icon: "👨‍🏫",
+            className: "priority-medium",
+            title: "Consider Academic Support",
+            text: "Tutoring is not reported. If the student is struggling, consider faculty guidance, peer study groups, or tutoring."
+        });
+    }
+
+    if (parentalSupport <= 1) {
+        recommendations.push({
+            icon: "🤝",
+            className: "priority-medium",
+            title: "Strengthen Support",
+            text: "The reported parental support level is low. Regular communication with trusted supporters or academic mentors may help."
+        });
+    }
+
+    if (
+        extracurricular === 0 &&
+        sports === 0 &&
+        music === 0 &&
+        volunteering === 0
     ) {
+        recommendations.push({
+            icon: "🌱",
+            className: "priority-medium",
+            title: "Consider Balanced Activities",
+            text: "No listed extracurricular activities are reported. If practical, consider an activity that fits the student's interests and schedule."
+        });
+    }
 
-        const container =
-            document.getElementById(
-                "probabilityList"
-            );
+    if (Number.isFinite(gpa) && gpa >= 8.5) {
+        recommendations.push({
+            icon: "🏆",
+            className: "priority-good",
+            title: "Maintain Progress",
+            text: "The predicted GPA is high. Continue effective study habits and review feedback to maintain progress."
+        });
+    }
 
+    if (recommendations.length === 0) {
+        recommendations.push({
+            icon: "📘",
+            className: "priority-good",
+            title: "Keep Reviewing Progress",
+            text: "Review academic performance regularly and adjust the study plan when necessary."
+        });
+    }
 
-        container.innerHTML = "";
+    return recommendations;
+}
 
+function renderAdvisor(student, prediction) {
+    const container = document.getElementById("recommendations");
+    container.replaceChildren();
 
-        if (
-            !probabilities ||
-            typeof probabilities !==
-                "object"
-        ) {
+    const recommendations = generateRecommendations(student, prediction);
 
-            document.getElementById(
-                "probabilities"
-            ).style.display =
-                "none";
+    recommendations.slice(0, 5).forEach(recommendation => {
+        const item = document.createElement("div");
+        item.className = "recommendation";
 
-            return;
+        const icon = document.createElement("div");
+        icon.className =
+            "recommendation-icon " + recommendation.className;
+        icon.textContent = recommendation.icon;
 
-        }
+        const content = document.createElement("div");
+        content.className = "recommendation-content";
 
+        const heading = document.createElement("h4");
+        heading.textContent = recommendation.title;
 
-        document.getElementById(
-            "probabilities"
-        ).style.display =
-            "block";
+        const text = document.createElement("p");
+        text.textContent = recommendation.text;
 
+        content.append(heading, text);
+        item.append(icon, content);
+        container.appendChild(item);
+    });
 
-        Object.entries(
-            probabilities
-        ).forEach(
-            ([gradeClass, probability]) => {
+    const gpa = Number(prediction.predicted_gpa);
+    const overall = document.getElementById("overallRecommendation");
 
-                const numeric =
-                    Number(
-                        probability
-                    );
+    if (!Number.isFinite(gpa)) {
+        overall.textContent =
+            "The GPA estimate is unavailable. Review the API response and model output.";
+    } else if (gpa >= 8.875) {
+        overall.textContent =
+            "The model estimates excellent academic performance. Maintain consistent learning habits and continue reviewing feedback.";
+    } else if (gpa >= 7.75) {
+        overall.textContent =
+            "The model estimates very good academic performance. Maintain consistency and focus on areas where further improvement is possible.";
+    } else if (gpa >= 6.625) {
+        overall.textContent =
+            "The model estimates good academic performance. Continue regular study and attendance, and review challenging subjects.";
+    } else if (gpa >= 5.5) {
+        overall.textContent =
+            "The model suggests room for improvement. A structured study routine, attendance monitoring, and appropriate academic support may help.";
+    } else {
+        overall.textContent =
+            "The model estimates a higher level of academic concern. Review the student's circumstances and consider timely, supportive academic assistance.";
+    }
+}
 
+/* -------------------------------------------------------
+   CLASS PROBABILITIES
+------------------------------------------------------- */
 
-                const percentage =
-                    numeric <= 1
-                        ? numeric * 100
-                        : numeric;
+function renderProbabilities(probabilities) {
+    const container = document.getElementById("probabilityList");
+    const section = document.getElementById("probabilities");
 
+    container.replaceChildren();
 
-                const row =
-                    document.createElement(
-                        "div"
-                    );
+    if (
+        !probabilities ||
+        typeof probabilities !== "object" ||
+        Array.isArray(probabilities)
+    ) {
+        section.style.display = "none";
+        return;
+    }
 
-                row.className =
-                    "probability-row";
+    const entries = Object.entries(probabilities)
+        .map(([gradeClass, probability]) => {
+            let numeric = Number(probability);
 
-
-                row.innerHTML = `
-
-                    <div
-                        class="probability-top"
-                    >
-
-                        <span>
-                            Class ${gradeClass}
-                        </span>
-
-                        <strong>
-                            ${percentage.toFixed(1)}%
-                        </strong>
-
-                    </div>
-
-                    <div class="progress">
-
-                        <div
-                            class="progress-bar"
-                            style="
-                                width:
-                                ${Math.min(
-                                    100,
-                                    Math.max(
-                                        0,
-                                        percentage
-                                    )
-                                )}%;
-                            "
-                        ></div>
-
-                    </div>
-
-                `;
-
-
-                container.appendChild(
-                    row
-                );
-
+            if (!Number.isFinite(numeric)) {
+                return null;
             }
+
+            if (numeric >= 0 && numeric <= 1) {
+                numeric *= 100;
+            }
+
+            return {
+                gradeClass,
+                percentage: Math.max(0, Math.min(100, numeric))
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+            const classA = Number(a.gradeClass);
+            const classB = Number(b.gradeClass);
+
+            if (Number.isFinite(classA) && Number.isFinite(classB)) {
+                return classA - classB;
+            }
+
+            return a.gradeClass.localeCompare(b.gradeClass);
+        });
+
+    if (entries.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+
+    section.style.display = "block";
+
+    entries.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "probability-row";
+
+        const top = document.createElement("div");
+        top.className = "probability-top";
+
+        const label = document.createElement("span");
+        label.textContent =
+            `Class ${item.gradeClass} — ${getGradeLabel(Number(item.gradeClass))}`;
+
+        const value = document.createElement("strong");
+        value.textContent = item.percentage.toFixed(1) + "%";
+
+        top.append(label, value);
+
+        const progress = document.createElement("div");
+        progress.className = "progress";
+
+        const bar = document.createElement("div");
+        bar.className = "progress-bar";
+        bar.style.width = item.percentage + "%";
+
+        progress.appendChild(bar);
+        row.append(top, progress);
+        container.appendChild(row);
+    });
+}
+
+/* -------------------------------------------------------
+   DISPLAY RESULT
+------------------------------------------------------- */
+
+function displayPrediction(student, prediction) {
+    const gpa = Number(prediction.predicted_gpa);
+
+    if (!Number.isFinite(gpa)) {
+        throw new Error(
+            "The API response does not contain a valid predicted_gpa value."
         );
-
     }
 
+    const gradeValue =
+        prediction.grade_class ??
+        prediction.predicted_grade_class ??
+        prediction.GradeClass;
 
-    /* =========================================================
-       SUBMIT
-    ========================================================= */
+    const gradeClass = Number(gradeValue);
 
-    form.addEventListener(
-        "submit",
-        async event => {
+    document.getElementById("predictedGPA").textContent =
+        gpa.toFixed(2) + " / 10";
 
-            event.preventDefault();
+    const gradeLabel = Number.isFinite(gradeClass)
+        ? getGradeLabel(gradeClass)
+        : "Class unavailable";
 
+    document.getElementById("predictedClass").textContent =
+        Number.isFinite(gradeClass)
+            ? `Grade Class ${gradeClass} — ${gradeLabel}`
+            : "Grade Class unavailable";
 
-            errorBox.style.display =
-                "none";
+    document.getElementById("performanceCategory").textContent =
+        getPerformanceCategory(gpa, prediction);
 
+    document.getElementById("modelStatus").textContent = "Completed";
 
-            loading.style.display =
-                "flex";
+    renderAdvisor(student, prediction);
 
-
-            const student =
-                getFormData();
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/api/predict",
-                        {
-
-                            method: "POST",
-
-                            headers: {
-
-                                "Content-Type":
-                                    "application/json"
-
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    student
-                                )
-
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (
-                    !response.ok ||
-                    !data.success
-                ) {
-
-                    throw new Error(
-                        data.error ||
-                        "Prediction failed."
-                    );
-
-                }
-
-
-                const prediction =
-                    data.prediction ||
-                    data;
-
-
-                /* =================================
-                   GPA
-                ================================= */
-
-                const predictedGPA =
-                    Number(
-                        prediction.predicted_gpa
-                    );
-
-
-                document.getElementById(
-                    "predictedGPA"
-                ).textContent =
-                    Number.isFinite(
-                        predictedGPA
-                    )
-                        ? predictedGPA.toFixed(2)
-                        : "--";
-
-
-                /* =================================
-                   GRADE CLASS
-                ================================= */
-
-                const gradeClass =
-                    prediction.grade_class;
-
-
-                document.getElementById(
-                    "predictedClass"
-                ).textContent =
-                    `Grade Class ${gradeClass}`;
-
-
-                /* =================================
-                   PERFORMANCE
-                ================================= */
-
-                document.getElementById(
-                    "performanceCategory"
-                ).textContent =
-                    prediction.performance_category ||
-                    prediction.performance ||
-                    "Unknown";
-
-
-                /* =================================
-                   MODEL STATUS
-                ================================= */
-
-                document.getElementById(
-                    "modelStatus"
-                ).textContent =
-                    "Active";
-
-
-                /* =================================
-                   ADVISOR
-                ================================= */
-
-                renderAdvisor(
-                    student,
-                    prediction
-                );
-
-
-                /* =================================
-                   PROBABILITIES
-                ================================= */
-
-                renderProbabilities(
-                    prediction.probabilities ||
-                    prediction.class_probabilities
-                );
-
-
-                /* =================================
-                   SHOW RESULT
-                ================================= */
-
-                resultPanel.style.display =
-                    "block";
-
-
-                resultPanel.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Prediction error:",
-                    error
-                );
-
-
-                errorBox.textContent =
-                    "❌ " +
-                    error.message;
-
-
-                errorBox.style.display =
-                    "block";
-
-            }
-
-            finally {
-
-                loading.style.display =
-                    "none";
-
-            }
-
-        }
+    renderProbabilities(
+        prediction.probabilities ||
+        prediction.class_probabilities ||
+        prediction.grade_class_probabilities
     );
 
+    resultPanel.style.display = "block";
 
-    /* =========================================================
-       RESET
-    ========================================================= */
+    resultPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
 
-    resetButton.addEventListener(
-        "click",
-        () => {
+/* -------------------------------------------------------
+   SUBMIT PREDICTION
+------------------------------------------------------- */
 
-            form.reset();
+form.addEventListener("submit", async event => {
+    event.preventDefault();
 
+    errorBox.style.display = "none";
+    resultPanel.style.display = "none";
+    loading.style.display = "flex";
+    predictButton.disabled = true;
 
-            resultPanel.style.display =
-                "none";
+    try {
+        const student = getFormData();
 
+        const response = await fetch("/api/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(student)
+        });
 
-            errorBox.style.display =
-                "none";
+        let data;
 
-
-            document.getElementById(
-                "recommendations"
-            ).innerHTML = "";
-
-
-            document.getElementById(
-                "probabilityList"
-            ).innerHTML = "";
-
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error(
+                "The prediction API did not return valid JSON. Check the Flask backend."
+            );
         }
-    );
 
+        if (!response.ok || data.success === false) {
+            throw new Error(
+                data.error ||
+                data.message ||
+                `Prediction failed with HTTP status ${response.status}.`
+            );
+        }
+
+        const prediction = data.prediction || data.result || data;
+
+        displayPrediction(student, prediction);
+
+    } catch (error) {
+        console.error("Prediction error:", error);
+
+        errorBox.textContent = "❌ " + error.message;
+        errorBox.style.display = "block";
+
+    } finally {
+        loading.style.display = "none";
+        predictButton.disabled = false;
+    }
+});
+
+/* -------------------------------------------------------
+   RESET FORM AND RESULTS
+------------------------------------------------------- */
+
+resetButton.addEventListener("click", () => {
+    form.reset();
+
+    resultPanel.style.display = "none";
+    errorBox.style.display = "none";
+
+    document.getElementById("predictedGPA").textContent = "--";
+    document.getElementById("predictedClass").textContent = "Grade Class --";
+    document.getElementById("performanceCategory").textContent = "--";
+    document.getElementById("modelStatus").textContent = "--";
+    document.getElementById("recommendations").replaceChildren();
+    document.getElementById("probabilityList").replaceChildren();
+    document.getElementById("probabilities").style.display = "block";
+    document.getElementById("overallRecommendation").textContent = "--";
+
+    form.querySelector("input").focus();
+});
 </script>
 
-
 </body>
-
 </html>

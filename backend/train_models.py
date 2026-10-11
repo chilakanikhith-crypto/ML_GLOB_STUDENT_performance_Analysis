@@ -4,44 +4,31 @@ import json
 import pandas as pd
 
 # ============================================================
-# PATH SETUP
+# PATH CONFIGURATION
 # ============================================================
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CSV_PATH = os.path.join(
     BASE_DIR,
     "Student_performance_data.csv"
 )
 
-MODELS_DIR = os.path.join(
-    BASE_DIR,
-    "models"
-)
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 RESULTS_PATH = os.path.join(
     MODELS_DIR,
     "model_evaluation_results.json"
 )
 
-# Add backend directory to Python path
-BACKEND_DIR = os.path.join(BASE_DIR, "backend")
-
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
 from ml_models import train_all_models
-
-
-# ============================================================
-# DISPLAY HELPERS
-# ============================================================
-
-def print_header(title):
-    print()
-    print("=" * 70)
-    print(title)
-    print("=" * 70)
 
 
 # ============================================================
@@ -66,12 +53,7 @@ REQUIRED_COLUMNS = [
     "GradeClass"
 ]
 
-
-# ============================================================
-# ML FEATURES
-# ============================================================
-
-ML_FEATURES = [
+FEATURE_COLUMNS = [
     "Age",
     "Gender",
     "Ethnicity",
@@ -88,51 +70,44 @@ ML_FEATURES = [
 
 
 # ============================================================
+# DISPLAY HELPER
+# ============================================================
+
+def print_header(title):
+    print("\n" + "=" * 65)
+    print(title)
+    print("=" * 65)
+
+
+# ============================================================
 # DATASET VALIDATION
 # ============================================================
 
 def validate_dataset():
-
-    print_header("DATASET VALIDATION")
-
-    # --------------------------------------------------------
-    # Check dataset
-    # --------------------------------------------------------
+    print_header("ACADEMIC PERFORMANCE ANALYTICS")
+    print("Checking dataset...")
 
     if not os.path.exists(CSV_PATH):
-
-        print("ERROR: Dataset not found.")
-        print()
-        print("Expected location:")
-        print(CSV_PATH)
-
+        print("\nERROR: Dataset not found.")
+        print("Expected path:", CSV_PATH)
         return None
-
-    print()
-    print("Dataset found:")
-    print(CSV_PATH)
-
-    # --------------------------------------------------------
-    # Load dataset
-    # --------------------------------------------------------
 
     try:
         df = pd.read_csv(CSV_PATH)
-    except Exception as e:
 
-        print()
-        print("ERROR: Could not read dataset.")
-        print(str(e))
-
+    except Exception as error:
+        print("\nERROR: Could not read CSV.")
+        print(error)
         return None
 
-    print()
-    print(f"Dataset shape: {df.shape}")
+    print("Dataset path:", CSV_PATH)
+    print("Dataset shape:", df.shape)
 
-    # --------------------------------------------------------
-    # Check required columns
-    # --------------------------------------------------------
+    if df.empty:
+        print("ERROR: Dataset is empty.")
+        return None
 
+    # Check required columns.
     missing_columns = [
         column
         for column in REQUIRED_COLUMNS
@@ -140,107 +115,126 @@ def validate_dataset():
     ]
 
     if missing_columns:
-
-        print()
-        print("ERROR: Missing required columns:")
+        print("\nERROR: Missing columns:")
 
         for column in missing_columns:
-            print(f"  ✗ {column}")
+            print("-", column)
 
         return None
 
-    print()
-    print("All required columns are present.")
-
-    # --------------------------------------------------------
-    # Display ML features
-    # --------------------------------------------------------
-
-    print()
-    print("ML input features:")
-
-    for feature in ML_FEATURES:
-        print(f"  ✓ {feature}")
-
-    # --------------------------------------------------------
-    # Leakage checks
-    # --------------------------------------------------------
-
-    print()
-    print("Checking for data leakage...")
-
-    if "StudentID" in ML_FEATURES:
-
-        print("  ✗ StudentID is incorrectly included.")
+    # Check missing values.
+    if df[REQUIRED_COLUMNS].isnull().any().any():
+        print("\nERROR: Missing values detected.")
+        print(df[REQUIRED_COLUMNS].isnull().sum())
         return None
 
-    print("  ✓ StudentID excluded")
-
-    if "GPA" in ML_FEATURES:
-
-        print("  ✗ GPA is incorrectly included in GradeClass features.")
-        return None
-
-    print("  ✓ GPA excluded from GradeClass features")
-
-    # --------------------------------------------------------
-    # Missing values
-    # --------------------------------------------------------
-
-    print()
-    print("Missing values:")
-
-    missing_values = df[REQUIRED_COLUMNS].isnull().sum()
-
-    total_missing = int(missing_values.sum())
-
-    if total_missing == 0:
-
-        print("  ✓ No missing values")
-
-    else:
-
-        print("  ✗ Missing values detected:")
-
-        for column, count in missing_values.items():
-
-            if count > 0:
-                print(f"    {column}: {count}")
-
-        return None
-
-    # --------------------------------------------------------
-    # GradeClass distribution
-    # --------------------------------------------------------
-
-    print()
-    print("GradeClass distribution:")
-
-    grade_counts = df["GradeClass"].value_counts().sort_index()
-
-    for grade_class, count in grade_counts.items():
-
-        print(
-            f"  Class {grade_class}: "
-            f"{count} students"
+    # Convert required columns to numeric values.
+    for column in REQUIRED_COLUMNS:
+        converted = pd.to_numeric(
+            df[column],
+            errors="coerce"
         )
 
-    # --------------------------------------------------------
-    # GPA statistics
-    # --------------------------------------------------------
+        if converted.isna().any():
+            print(
+                f"\nERROR: Invalid numeric values "
+                f"found in {column}."
+            )
+            return None
 
-    print()
-    print("GPA statistics:")
+        df[column] = converted
 
-    average_gpa = df["GPA"].mean()
-    highest_gpa = df["GPA"].max()
-    lowest_gpa = df["GPA"].min()
+    # Check infinite values.
+    if not all(
+        df[REQUIRED_COLUMNS]
+        .map(lambda value: abs(float(value)) != float("inf"))
+        .all()
+    ):
+        print("\nERROR: Infinite values detected.")
+        return None
 
-    print(f"  Average GPA: {average_gpa:.2f}")
-    print(f"  Highest GPA: {highest_gpa:.2f}")
-    print(f"  Lowest GPA: {lowest_gpa:.2f}")
+    # Check duplicate student IDs.
+    if df["StudentID"].duplicated().any():
+        print("\nERROR: Duplicate StudentID values found.")
+        return None
 
-    print_header("DATASET VALIDATION COMPLETE")
+    # Check student IDs.
+    if (df["StudentID"] <= 0).any():
+        print("\nERROR: StudentID must be positive.")
+        return None
+
+    if not (df["StudentID"] % 1 == 0).all():
+        print("\nERROR: StudentID must contain integers.")
+        return None
+
+    # Check GPA range.
+    if not df["GPA"].between(1, 10).all():
+        print("\nERROR: GPA must be between 1 and 10.")
+        print("Check the CSV conversion before training.")
+        return None
+
+    # Check GradeClass values.
+    valid_classes = {0, 1, 2, 3, 4}
+    actual_classes = set(df["GradeClass"].unique())
+
+    if not actual_classes.issubset(valid_classes):
+        print(
+            "\nERROR: GradeClass must contain only "
+            "values 0, 1, 2, 3, 4."
+        )
+        return None
+
+    if not (df["GradeClass"] % 1 == 0).all():
+        print("\nERROR: GradeClass values must be integers.")
+        return None
+
+    if df["GradeClass"].nunique() < 2:
+        print(
+            "\nERROR: At least two GradeClass categories "
+            "are required."
+        )
+        return None
+
+    # Verify the approved model features.
+    for feature in FEATURE_COLUMNS:
+        if feature not in df.columns:
+            print("\nERROR: Missing feature:", feature)
+            return None
+
+    # Check that at least two examples exist in each class
+    # for stratified training and validation.
+    class_counts = df["GradeClass"].value_counts()
+
+    if class_counts.min() < 2:
+        print(
+            "\nERROR: Every GradeClass represented in the "
+            "dataset needs at least two students."
+        )
+        print(class_counts.sort_index())
+        return None
+
+    # Display validation summary.
+    print("\nDATASET VALIDATION SUCCESSFUL")
+    print("-" * 65)
+
+    print("GPA scale: 1-10")
+    print("Number of input features:", len(FEATURE_COLUMNS))
+    print("StudentID excluded from model features.")
+    print("Actual GPA excluded from classification inputs.")
+
+    print("\nGPA Statistics")
+    print("-" * 30)
+    print(f"Average GPA: {df['GPA'].mean():.2f}")
+    print(f"Lowest GPA: {df['GPA'].min():.2f}")
+    print(f"Highest GPA: {df['GPA'].max():.2f}")
+
+    print("\nGradeClass Distribution")
+    print("-" * 30)
+    print(
+        df["GradeClass"]
+        .value_counts()
+        .sort_index()
+    )
 
     return df
 
@@ -250,341 +244,169 @@ def validate_dataset():
 # ============================================================
 
 def display_results():
-
-    print_header("FINAL TRAINING SUMMARY")
+    print_header("MODEL TRAINING RESULTS")
 
     if not os.path.exists(RESULTS_PATH):
-
-        print()
         print("ERROR: Evaluation results file not found.")
-
-        return
+        print("Expected path:", RESULTS_PATH)
+        return False
 
     try:
-
         with open(
             RESULTS_PATH,
             "r",
             encoding="utf-8"
         ) as file:
-
             results = json.load(file)
 
-    except Exception as e:
-
-        print()
+    except Exception as error:
         print("ERROR: Could not read evaluation results.")
-        print(str(e))
+        print(error)
+        return False
 
-        return
+    # Classification results.
+    print("\nCLASSIFICATION RESULTS")
+    print("-" * 65)
 
-    # --------------------------------------------------------
-    # Best Classification Model
-    # --------------------------------------------------------
-
-    best_classifier = results.get(
-        "best_classification_model",
-        "Not available"
+    print(
+        "Best classifier:",
+        results.get(
+            "best_classifier",
+            results.get("best_classification_model", "Unavailable")
+        )
     )
 
-    best_regressor = results.get(
-        "best_regression_model",
-        "Not available"
+    print(
+        "Best Macro F1:",
+        results.get(
+            "best_classifier_macro_f1",
+            "Unavailable"
+        )
     )
 
-    print()
-    print("BEST CLASSIFICATION MODEL")
-    print("-" * 70)
+    classification_models = results.get(
+        "classification_models",
+        {}
+    )
 
-    if isinstance(best_classifier, dict):
+    for name, metrics in classification_models.items():
+        print(f"\n{name}")
+        print("-" * 30)
+        print("Accuracy:", metrics.get("accuracy", "N/A"))
+        print("Precision:", metrics.get("precision", "N/A"))
+        print("Recall:", metrics.get("recall", "N/A"))
 
-        model_name = (
-            best_classifier.get("name")
-            or best_classifier.get("model")
-            or best_classifier.get("model_name")
-            or "Unknown"
-        )
-
-        accuracy = best_classifier.get(
-            "cv_accuracy",
-            best_classifier.get("accuracy", None)
-        )
-
-        macro_f1 = best_classifier.get(
-            "cv_macro_f1",
-            best_classifier.get("macro_f1", None)
-        )
-
-        balanced_accuracy = best_classifier.get(
-            "cv_balanced_accuracy",
-            best_classifier.get("balanced_accuracy", None)
-        )
-
-        print(f"Model: {model_name}")
-
-        if accuracy is not None:
-            print(f"CV Accuracy: {accuracy:.4f}")
-
-        if macro_f1 is not None:
-            print(f"CV Macro F1: {macro_f1:.4f}")
-
-        if balanced_accuracy is not None:
-            print(
-                f"CV Balanced Accuracy: "
-                f"{balanced_accuracy:.4f}"
+        print(
+            "Macro F1:",
+            metrics.get(
+                "f1_score",
+                metrics.get("macro_f1", "N/A")
             )
-
-    else:
-
-        print(f"Model: {best_classifier}")
-
-        # ----------------------------------------------------
-        # Try finding details from classification_models
-        # ----------------------------------------------------
-
-        classification_models = results.get(
-            "classification_models",
-            {}
         )
 
-        if isinstance(classification_models, dict):
+    # Regression results.
+    print("\nGPA REGRESSION RESULTS")
+    print("-" * 65)
 
-            if best_classifier in classification_models:
-
-                model_result = classification_models[
-                    best_classifier
-                ]
-
-                accuracy = model_result.get(
-                    "cv_accuracy"
-                )
-
-                macro_f1 = model_result.get(
-                    "cv_macro_f1"
-                )
-
-                balanced_accuracy = model_result.get(
-                    "cv_balanced_accuracy"
-                )
-
-                if accuracy is not None:
-                    print(
-                        f"CV Accuracy: "
-                        f"{accuracy:.4f}"
-                    )
-
-                if macro_f1 is not None:
-                    print(
-                        f"CV Macro F1: "
-                        f"{macro_f1:.4f}"
-                    )
-
-                if balanced_accuracy is not None:
-                    print(
-                        f"CV Balanced Accuracy: "
-                        f"{balanced_accuracy:.4f}"
-                    )
-
-    # --------------------------------------------------------
-    # Best Regression Model
-    # --------------------------------------------------------
-
-    print()
-    print("BEST REGRESSION MODEL")
-    print("-" * 70)
-
-    if isinstance(best_regressor, dict):
-
-        model_name = (
-            best_regressor.get("name")
-            or best_regressor.get("model")
-            or best_regressor.get("model_name")
-            or "Unknown"
+    print(
+        "Best regressor:",
+        results.get(
+            "best_regressor",
+            results.get("best_regression_model", "Unavailable")
         )
-
-        rmse = best_regressor.get(
-            "cv_rmse",
-            best_regressor.get("rmse", None)
-        )
-
-        r2 = best_regressor.get(
-            "cv_r2",
-            best_regressor.get("r2", None)
-        )
-
-        print(f"Model: {model_name}")
-
-        if rmse is not None:
-            print(f"CV RMSE: {rmse:.4f}")
-
-        if r2 is not None:
-            print(f"CV R2: {r2:.4f}")
-
-    else:
-
-        print(f"Model: {best_regressor}")
-
-        # ----------------------------------------------------
-        # Try finding details from regression_models
-        # ----------------------------------------------------
-
-        regression_models = results.get(
-            "regression_models",
-            {}
-        )
-
-        if isinstance(regression_models, dict):
-
-            if best_regressor in regression_models:
-
-                model_result = regression_models[
-                    best_regressor
-                ]
-
-                rmse = model_result.get(
-                    "cv_rmse"
-                )
-
-                r2 = model_result.get(
-                    "cv_r2"
-                )
-
-                if rmse is not None:
-                    print(
-                        f"CV RMSE: "
-                        f"{rmse:.4f}"
-                    )
-
-                if r2 is not None:
-                    print(
-                        f"CV R2: "
-                        f"{r2:.4f}"
-                    )
-
-    # --------------------------------------------------------
-    # Saved files
-    # --------------------------------------------------------
-
-    print()
-    print("MODEL FILES")
-    print("-" * 70)
-
-    classifier_path = os.path.join(
-        MODELS_DIR,
-        "academic_performance_model.pkl"
     )
 
-    regressor_path = os.path.join(
-        MODELS_DIR,
-        "academic_gpa_model.pkl"
+    print(
+        "Best MAE:",
+        results.get("best_regressor_mae", "Unavailable")
     )
 
-    features_path = os.path.join(
-        MODELS_DIR,
-        "feature_names.pkl"
+    regression_models = results.get(
+        "regression_models",
+        {}
     )
 
-    results_path = os.path.join(
-        MODELS_DIR,
+    for name, metrics in regression_models.items():
+        print(f"\n{name}")
+        print("-" * 30)
+        print("MAE:", metrics.get("mae", "N/A"))
+        print("RMSE:", metrics.get("rmse", "N/A"))
+        print("R2:", metrics.get("r2", "N/A"))
+
+    # Check model files.
+    print("\nSAVED MODEL FILES")
+    print("-" * 65)
+
+    expected_files = [
+        "academic_performance_model.pkl",
+        "academic_gpa_model.pkl",
+        "feature_names.pkl",
         "model_evaluation_results.json"
-    )
-
-    files = [
-        ("Classifier", classifier_path),
-        ("GPA Regressor", regressor_path),
-        ("Feature Names", features_path),
-        ("Evaluation Results", results_path)
     ]
 
-    for name, path in files:
+    all_exist = True
+
+    for filename in expected_files:
+        path = os.path.join(MODELS_DIR, filename)
 
         if os.path.exists(path):
-
-            print(f"  ✓ {name}")
-            print(f"    {path}")
-
+            print("[OK]", filename)
         else:
+            print("[MISSING]", filename)
+            all_exist = False
 
-            print(f"  ✗ {name}")
-            print(f"    Missing: {path}")
+    if all_exist:
+        print_header("TRAINING COMPLETED SUCCESSFULLY")
+        return True
 
-    # --------------------------------------------------------
-    # Final status
-    # --------------------------------------------------------
-
-    print()
-    print("=" * 70)
-    print("TRAINING SUCCESSFUL")
-    print("=" * 70)
-
-    print()
-    print("The trained models are ready for the Flask application.")
-
-    print()
-    print("Next step:")
-    print("Start the Flask application and test the dashboard.")
-
-    print()
+    print("\nSome model files are missing.")
+    return False
 
 
 # ============================================================
-# MAIN
+# MAIN FUNCTION
 # ============================================================
 
 def main():
-
-    # --------------------------------------------------------
-    # Validate dataset
-    # --------------------------------------------------------
-
+    # Step 1: Validate dataset.
     df = validate_dataset()
 
     if df is None:
-
-        print()
-        print("Dataset validation failed.")
         sys.exit(1)
 
-    # --------------------------------------------------------
-    # Train models
-    # --------------------------------------------------------
+    # Step 2: Create models directory.
+    os.makedirs(MODELS_DIR, exist_ok=True)
 
-    print()
-    print()
-    print("Starting model training...")
-    print()
+    # Step 3: Train the models.
+    print_header("STARTING MODEL TRAINING")
 
     try:
+        results = train_all_models()
 
-        train_all_models()
+        if not isinstance(results, dict):
+            print(
+                "ERROR: train_all_models() did not "
+                "return a dictionary."
+            )
+            sys.exit(1)
 
     except KeyboardInterrupt:
-
-        print()
-        print("TRAINING INTERRUPTED BY USER.")
+        print("\nTraining interrupted by user.")
         sys.exit(1)
 
-    except Exception as e:
-
-        print()
-        print("=" * 70)
-        print("TRAINING ERROR")
-        print("=" * 70)
-
-        print()
-        print(str(e))
-
+    except Exception as error:
+        print_header("TRAINING FAILED")
+        print("Error type:", type(error).__name__)
+        print("Error message:", str(error))
         sys.exit(1)
 
-    # --------------------------------------------------------
-    # Display results
-    # --------------------------------------------------------
-
-    display_results()
+    # Step 4: Display results.
+    if not display_results():
+        sys.exit(1)
 
 
 # ============================================================
-# RUN
+# EXECUTION
 # ============================================================
 
 if __name__ == "__main__":
